@@ -17,7 +17,6 @@ Future<void> main() async {
     url:
         dotenv.env['SUPABASE_URL'] ??
         'https://wxzklwhlqnzucnhhyfij.supabase.co',
-    // FIXED: This line replaces 'anonKey:' with 'publishableKey:'
     publishableKey:
         dotenv.env['SUPABASE_KEY'] ??
         'sb_publishable_XUnK5gdRc-kEmBEf50komQ_TciqPQt9',
