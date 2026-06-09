@@ -12,12 +12,14 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   // Initialize Supabase
+  // Initialize Supabase
   await Supabase.initialize(
     url:
         dotenv.env['SUPABASE_URL'] ??
         'https://wxzklwhlqnzucnhhyfij.supabase.co',
-    anonKey:
-        dotenv.env['SUPABASE_ANON_KEY'] ??
+    // FIXED: This line replaces 'anonKey:' with 'publishableKey:'
+    publishableKey:
+        dotenv.env['SUPABASE_KEY'] ??
         'sb_publishable_XUnK5gdRc-kEmBEf50komQ_TciqPQt9',
   );
 
