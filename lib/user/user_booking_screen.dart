@@ -125,9 +125,9 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
   Widget _buildInboxScreen() {
     final announcements = [
       {
-        'title': '🏊 Olympic Pool Cleaning Schedule',
+        'title': '🏊 Jadual Pembersihan Kolam Utama',
         'time': '2 hours ago',
-        'content': 'Please be informed that the Main Olympic Pool will undergo routine cleaning on Thursday morning from 8:00 AM to 12:00 PM. Training pool remains open.',
+        'content': 'Sila ambil maklum bahawa Kolam Utama (Olimpik) akan ditutup bagi pembersihan rutin pada pagi Khamis dari jam 8:00 AM hingga 12:00 PM. Kolam-kolam lain beroperasi seperti biasa.',
         'isNew': true,
       },
       {

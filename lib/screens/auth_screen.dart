@@ -48,12 +48,14 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
+    final String group = _userType == 'Public' ? 'Orang Awam' : 'Staf & Pelajar UPSI';
+
     // Set user profile in DatabaseService
     DatabaseService.setMockUser(
       _nameController.text.trim(),
       _emailController.text.trim(),
       _userType == 'Public' ? '' : _upsiIdController.text.trim(),
-      _userType,
+      group,
     );
 
     Navigator.push(
@@ -85,7 +87,7 @@ class _AuthScreenState extends State<AuthScreen> {
         'Muhammad Ikram',
         'ikram@student.upsi.edu.my',
         'D20211099231',
-        'Student',
+        'Staf & Pelajar UPSI',
       );
       Navigator.push(
         context,
@@ -96,7 +98,7 @@ class _AuthScreenState extends State<AuthScreen> {
         'John Smith',
         'john.smith@gmail.com',
         '',
-        'Public',
+        'Orang Awam',
       );
       Navigator.push(
         context,

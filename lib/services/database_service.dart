@@ -13,14 +13,16 @@ class DatabaseService {
       email: 'ikram@upsi.edu.my',
       phone: '012-3456789',
       upsiId: 'D20211099231',
-      userType: 'Student',
-      poolType: 'Olympic Pool',
+      userType: 'Staf & Pelajar UPSI',
+      subCategory: 'Pelajar UPSI',
+      poolType: 'Kolam Utama',
       bookingDate: DateTime.now().add(const Duration(days: 1)),
       timeSlot: '08:00 AM - 10:00 AM',
       quantity: 2,
-      totalPrice: 4.00, // RM 2.00 * 2
+      totalPrice: 0.00, // RM 0.00 (Percuma)
       status: 'Approved',
       qrCode: 'RENANG-MOCK-1',
+      notes: 'Sila bawa kad pelajar',
       createdAt: DateTime.now().subtract(const Duration(hours: 12)),
     ),
     Booking(
@@ -29,14 +31,16 @@ class DatabaseService {
       email: 'fauzi@upsi.edu.my',
       phone: '019-8765432',
       upsiId: 'S88319',
-      userType: 'Staff',
-      poolType: 'Training Pool',
+      userType: 'Staf & Pelajar UPSI',
+      subCategory: 'Staf Holding/Sambilan/RA',
+      poolType: 'Kolam Renang Biasa',
       bookingDate: DateTime.now().add(const Duration(days: 2)),
       timeSlot: '04:00 PM - 06:00 PM',
       quantity: 1,
       totalPrice: 3.00, // RM 3.00 * 1
       status: 'Pending',
       qrCode: 'RENANG-MOCK-2',
+      notes: 'Sila bawa kad pekerja/bukti perkhidmatan',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     Booking(
@@ -45,14 +49,16 @@ class DatabaseService {
       email: 'sarah@gmail.com',
       phone: '011-2223334',
       upsiId: '',
-      userType: 'Public',
-      poolType: 'Kids Pool',
+      userType: 'Orang Awam',
+      subCategory: 'Dewasa',
+      poolType: 'Kolam Kanak-Kanak',
       bookingDate: DateTime.now().subtract(const Duration(days: 1)),
       timeSlot: '10:00 AM - 12:00 PM',
       quantity: 3,
-      totalPrice: 15.00, // RM 5.00 * 3
+      totalPrice: 30.00, // RM 10.00 * 3
       status: 'Checked In',
       qrCode: 'RENANG-MOCK-3',
+      notes: 'Sila bawa kad pengenalan',
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
   ];
@@ -62,7 +68,7 @@ class DatabaseService {
     'name': 'Muhammad Ikram',
     'email': 'ikram@student.upsi.edu.my',
     'upsiId': 'D20211099231',
-    'userType': 'Student',
+    'userType': 'Staf & Pelajar UPSI',
   };
 
   static bool isUseLocalFallback = false;

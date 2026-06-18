@@ -5,6 +5,30 @@ import '../core/app_theme.dart';
 import '../models/booking.dart';
 import '../services/database_service.dart';
 
+class CartItem {
+  final String poolType;
+  final DateTime bookingDate;
+  final String timeSlot;
+  final String userType;
+  final String subCategory;
+  final String notes;
+  final int quantity;
+  final double pricePerTicket;
+
+  CartItem({
+    required this.poolType,
+    required this.bookingDate,
+    required this.timeSlot,
+    required this.userType,
+    required this.subCategory,
+    required this.notes,
+    required this.quantity,
+    required this.pricePerTicket,
+  });
+
+  double get totalPrice => pricePerTicket * quantity;
+}
+
 class UserOrderScreen extends StatefulWidget {
   final VoidCallback onBookingSuccess;
 
@@ -19,10 +43,17 @@ class UserOrderScreen extends StatefulWidget {
 
 class _UserOrderScreenState extends State<UserOrderScreen> {
   // Selection States
-  String _selectedPool = 'Olympic Pool';
+  String _selectedPool = 'Kolam Utama';
   DateTime _selectedDate = DateTime.now();
   String _selectedSlot = '08:00 AM - 10:00 AM';
   int _quantity = 1;
+
+  // New Category Selection States
+  String _selectedGroup = 'Staf & Pelajar UPSI';
+  String _selectedSubCategory = 'Pelajar UPSI';
+
+  // Cart state
+  final List<CartItem> _cart = [];
 
   // Coupon State
   final _promoController = TextEditingController();
@@ -31,28 +62,103 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   String? _appliedPromoCode;
   String? _promoError;
 
+  // Categories & Pricing Rules Definition
+  final Map<String, List<Map<String, dynamic>>> _categories = {
+    'Staf & Pelajar UPSI': [
+      {
+        'name': 'Pelajar UPSI',
+        'price': 0.0,
+        'note': 'Sila bawa kad pelajar',
+      },
+      {
+        'name': 'Staf/SUKSIS/SISPA/PALAPES - Suami/Isteri',
+        'price': 3.0,
+        'note': 'Sila bawa kad pekerja',
+      },
+      {
+        'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (0-7 tahun)',
+        'price': 0.0,
+        'note': 'Sila bawa kad pekerja',
+      },
+      {
+        'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (8 tahun ke atas)',
+        'price': 3.0,
+        'note': 'Sila bawa kad pekerja',
+      },
+      {
+        'name': 'Staf Holding/Sambilan/RA',
+        'price': 3.0,
+        'note': 'Sila bawa kad pekerja/bukti perkhidmatan',
+      },
+    ],
+    'Orang Awam': [
+      {
+        'name': 'Kanak-kanak (0-4 tahun)',
+        'price': 0.0,
+        'note': 'Sila bawa MyKid',
+      },
+      {
+        'name': 'Kanak-kanak (5-7 tahun)',
+        'price': 1.0,
+        'note': 'Sila bawa MyKid',
+      },
+      {
+        'name': 'Pelajar Sekolah & IPT (8-18 tahun)',
+        'price': 5.0,
+        'note': 'Sila bawa kad pelajar/Kad Pengenalan',
+      },
+      {
+        'name': 'Dewasa',
+        'price': 10.0,
+        'note': 'Sila bawa kad pengenalan',
+      },
+      {
+        'name': 'Warga Emas (60 tahun ke atas)',
+        'price': 5.0,
+        'note': 'Sila bawa kad pengenalan',
+      },
+      {
+        'name': 'Pesara / Pencen Kerajaan',
+        'price': 5.0,
+        'note': 'Sila bawa kad pencen',
+      },
+      {
+        'name': 'OKU - Kanak-kanak (0-7 tahun)',
+        'price': 0.0,
+        'note': 'Sila bawa kad OKU',
+      },
+      {
+        'name': 'OKU - Kanak-kanak (8-17 tahun)',
+        'price': 3.0,
+        'note': 'Sila bawa kad OKU',
+      },
+      {
+        'name': 'OKU - Dewasa',
+        'price': 5.0,
+        'note': 'Sila bawa kad OKU',
+      },
+    ],
+  };
+
   // Pool Catalog Data
   final List<Map<String, dynamic>> _pools = [
     {
-      'name': 'Olympic Pool',
+      'name': 'Kolam Utama',
       'icon': LucideIcons.trophy,
-      'depth': '1.8m - 2.2m',
-      'desc': '8-lane professional swimming pool. Perfect for athletic training and lap swimming.',
-      'prices': {'Student': 2.00, 'Staff': 3.00, 'Public': 5.00},
+      'depth': 'Standard Olimpik',
+      'desc': 'Standard Olimpik bersaiz 50 meter panjang dan 25 meter lebar dengan 10 lorong.',
     },
     {
-      'name': 'Training Pool',
+      'name': 'Kolam Renang Biasa',
       'icon': LucideIcons.compass,
-      'depth': '1.2m - 1.5m',
-      'desc': 'Ideal for beginners and learners. Semi-sheltered with coaching support available.',
-      'prices': {'Student': 1.50, 'Staff': 2.50, 'Public': 4.00},
+      'depth': '1.2 meter kedalaman',
+      'desc': 'Kedalaman bersesuaian untuk latihan renang biasa dan santai.',
     },
     {
-      'name': 'Kids Pool',
+      'name': 'Kolam Kanak-Kanak',
       'icon': LucideIcons.smile,
-      'depth': '0.4m - 0.8m',
-      'desc': 'Shallow water fun zone with slides and interactive water play equipment.',
-      'prices': {'Student': 1.00, 'Staff': 2.00, 'Public': 3.00},
+      'depth': '0.5 meter kedalaman',
+      'desc': 'Kawasan cetek dan selamat untuk kanak-kanak bermain air.',
     },
   ];
 
@@ -72,24 +178,40 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   }
 
   double _getPricePerTicket() {
-    final pool = _pools.firstWhere((p) => p['name'] == _selectedPool);
-    final String userType = DatabaseService.currentUser['userType'] ?? 'Student';
-    return (pool['prices'] as Map<String, double>)[userType] ?? 5.00;
+    final list = _categories[_selectedGroup] ?? [];
+    final sub = list.firstWhere(
+      (item) => item['name'] == _selectedSubCategory,
+      orElse: () => {'price': 0.0},
+    );
+    return (sub['price'] as num).toDouble();
   }
 
-  double _getSubtotal() {
+  String _getNotes() {
+    final list = _categories[_selectedGroup] ?? [];
+    final sub = list.firstWhere(
+      (item) => item['name'] == _selectedSubCategory,
+      orElse: () => {'note': ''},
+    );
+    return sub['note'] as String;
+  }
+
+  double _getSelectedSubtotal() {
     return _getPricePerTicket() * _quantity;
   }
 
-  double _getDiscountAmount() {
-    final subtotal = _getSubtotal();
+  double _getCartSubtotal() {
+    return _cart.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+
+  double _getCartDiscountAmount() {
+    final subtotal = _getCartSubtotal();
     double discount = (subtotal * _discountPercentage) + _flatDiscount;
     if (discount > subtotal) discount = subtotal;
     return discount;
   }
 
-  double _getTotalPrice() {
-    final total = _getSubtotal() - _getDiscountAmount();
+  double _getCartTotalPrice() {
+    final total = _getCartSubtotal() - _getCartDiscountAmount();
     return total < 0 ? 0.00 : total;
   }
 
@@ -122,6 +244,44 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     });
   }
 
+  void _addToCart() {
+    setState(() {
+      _cart.add(
+        CartItem(
+          poolType: _selectedPool,
+          bookingDate: _selectedDate,
+          timeSlot: _selectedSlot,
+          userType: _selectedGroup,
+          subCategory: _selectedSubCategory,
+          notes: _getNotes(),
+          quantity: _quantity,
+          pricePerTicket: _getPricePerTicket(),
+        ),
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(LucideIcons.checkCircle2, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Added $_quantity x $_selectedSubCategory to cart!",
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _showCheckoutSheet() {
     showModalBottomSheet(
       context: context,
@@ -130,9 +290,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final double subtotal = _getSubtotal();
-            final double discount = _getDiscountAmount();
-            final double total = _getTotalPrice();
+            final double subtotal = _getCartSubtotal();
+            final double discount = _getCartDiscountAmount();
+            final double total = _getCartTotalPrice();
             final currentUser = DatabaseService.currentUser;
 
             return Container(
@@ -166,7 +326,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Booking Checkout",
+                    "Checkout Cart",
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -175,15 +335,107 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                   const Divider(height: 24, color: AppTheme.border),
 
-                  // Booking summary details
-                  _buildSummaryRow("Pool Lane", _selectedPool),
-                  _buildSummaryRow(
-                    "Date",
-                    "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+                  // Cart Items List
+                  Flexible(
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.35,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _cart.length,
+                        itemBuilder: (context, idx) {
+                          final item = _cart[idx];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.background,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.border),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(LucideIcons.ticket, color: AppTheme.primaryNavy, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.subCategory,
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Text(
+                                        "${item.poolType} • ${item.timeSlot}",
+                                        style: GoogleFonts.outfit(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      Text(
+                                        "${item.bookingDate.day}/${item.bookingDate.month}/${item.bookingDate.year}",
+                                        style: GoogleFonts.outfit(
+                                          color: AppTheme.accentGold,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      "RM ${item.totalPrice.toStringAsFixed(2)}",
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryNavy,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      "${item.quantity} x RM ${item.pricePerTicket.toStringAsFixed(2)}",
+                                      style: GoogleFonts.outfit(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 18),
+                                  onPressed: () {
+                                    setModalState(() {
+                                      _cart.removeAt(idx);
+                                    });
+                                    setState(() {});
+                                    if (_cart.isEmpty) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                  _buildSummaryRow("Time Slot", _selectedSlot),
-                  _buildSummaryRow("Quantity", "$_quantity x RM ${ListTile(title: Text('')).title != null ? _getPricePerTicket().toStringAsFixed(2) : ''}"),
-                  const SizedBox(height: 16),
+                  const Divider(height: 24, color: AppTheme.border),
 
                   // User Category Card
                   Container(
@@ -197,26 +449,26 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         const Icon(LucideIcons.user, color: AppTheme.primaryNavy),
                         const SizedBox(width: 12),
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${currentUser['name']} (${currentUser['userType']})",
-                              style: GoogleFonts.outfit(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                            if (currentUser['upsiId'] != null && currentUser['upsiId']!.isNotEmpty)
-                              Text(
-                                "ID: ${currentUser['upsiId']}",
-                                style: GoogleFonts.outfit(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                          ],
-                        ),
+                           crossAxisAlignment: CrossAxisAlignment.start,
+                           children: [
+                             Text(
+                               "${currentUser['name']} (${currentUser['userType']})",
+                               style: GoogleFonts.outfit(
+                                                     fontSize: 13,
+                                                     fontWeight: FontWeight.bold,
+                                                     color: AppTheme.textPrimary,
+                                                   ),
+                             ),
+                             if (currentUser['upsiId'] != null && currentUser['upsiId']!.isNotEmpty)
+                               Text(
+                                 "ID: ${currentUser['upsiId']}",
+                                 style: GoogleFonts.outfit(
+                                   fontSize: 11,
+                                   color: AppTheme.textSecondary,
+                                 ),
+                               ),
+                           ],
+                         ),
                       ],
                     ),
                   ),
@@ -343,28 +595,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 13),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Future<void> _confirmBooking(BuildContext modalContext) async {
     Navigator.pop(modalContext); // Close modal sheet
@@ -379,34 +609,52 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     );
 
     // Simulate payment processing
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
     Navigator.pop(context); // Close loading dialog
 
     final currentUser = DatabaseService.currentUser;
     final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}';
     
-    // Create new booking object
-    final newBooking = Booking(
-      id: uniqueId,
-      name: currentUser['name'] ?? 'Guest',
-      email: currentUser['email'] ?? 'guest@upsi.edu.my',
-      phone: '01X-XXX XXXX',
-      upsiId: currentUser['upsiId'] ?? '',
-      userType: currentUser['userType'] ?? 'Public',
-      poolType: _selectedPool,
-      bookingDate: _selectedDate,
-      timeSlot: _selectedSlot,
-      quantity: _quantity,
-      totalPrice: _getTotalPrice(),
-      status: 'Approved', // Auto-approved for demo purposes
-      qrCode: 'UP-$uniqueId-${_selectedPool.substring(0, 3).toUpperCase()}',
-      createdAt: DateTime.now(),
-    );
+    // We will loop through all cart items and create a booking for each
+    for (int i = 0; i < _cart.length; i++) {
+      final item = _cart[i];
+      final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}-$i';
+      
+      // Calculate item specific price after promo code has been distributed or applied
+      final double cartSubtotal = _getCartSubtotal();
+      final double cartDiscount = _getCartDiscountAmount();
+      final double ratio = cartSubtotal > 0 ? (item.totalPrice / cartSubtotal) : 0;
+      final double itemDiscount = cartDiscount * ratio;
+      final double finalItemPrice = item.totalPrice - itemDiscount;
 
-    // Write to database (will fall back to memory automatically)
-    await DatabaseService().createBooking(newBooking);
+      final newBooking = Booking(
+        id: uniqueId,
+        name: currentUser['name'] ?? 'Guest',
+        email: currentUser['email'] ?? 'guest@upsi.edu.my',
+        phone: '01X-XXX XXXX',
+        upsiId: currentUser['upsiId'] ?? '',
+        userType: item.userType,
+        subCategory: item.subCategory,
+        poolType: item.poolType,
+        bookingDate: item.bookingDate,
+        timeSlot: item.timeSlot,
+        quantity: item.quantity,
+        totalPrice: finalItemPrice < 0 ? 0.00 : finalItemPrice,
+        status: 'Approved', // Auto-approved for demo purposes
+        qrCode: 'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
+        notes: item.notes,
+        createdAt: DateTime.now(),
+      );
+
+      // Write to database (will fall back to memory automatically)
+      await DatabaseService().createBooking(newBooking);
+    }
+
+    // Clear cart
+    setState(() {
+      _cart.clear();
+    });
 
     // Show Success Dialog
     if (!mounted) return;
@@ -425,7 +673,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                "Booking Confirmed!",
+                "Bookings Confirmed!",
                 style: GoogleFonts.outfit(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -434,7 +682,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Your swimming pass has been generated. Show the QR ticket at the pool entrance.",
+                "Your swimming passes have been generated successfully. Show the QR tickets at the pool entrance.",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   fontSize: 13,
@@ -458,7 +706,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double subtotal = _getSubtotal();
+    final double selectedSubtotal = _getSelectedSubtotal();
+    final List<Map<String, dynamic>> availableSubCategories = _categories[_selectedGroup] ?? [];
 
     return Column(
       children: [
@@ -530,7 +779,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. SELECT POOL CATEGORY
+                // 1. SELECT POOL AREA
                 Text(
                   "1. Select Pool Area",
                   style: GoogleFonts.outfit(
@@ -544,9 +793,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   children: _pools.map((pool) {
                     final String name = pool['name'];
                     final isSelected = name == _selectedPool;
-                    final priceMap = pool['prices'] as Map<String, double>;
-                    final userType = DatabaseService.currentUser['userType'] ?? 'Student';
-                    final price = priceMap[userType] ?? 5.00;
 
                     return GestureDetector(
                       onTap: () {
@@ -585,26 +831,13 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.textPrimary,
-                                        ),
-                                      ),
-                                      Text(
-                                        "RM ${price.toStringAsFixed(2)}",
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryNavy,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    name,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textPrimary,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -632,11 +865,155 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-                // 2. SELECT TIME SLOT
+                // 2. SELECT CATEGORY AND OPTIONS
                 Text(
-                  "2. Select Session Time",
+                  "2. Select Category & Ticket Type",
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Group selector toggle
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedGroup = 'Staf & Pelajar UPSI';
+                            _selectedSubCategory = _categories[_selectedGroup]![0]['name'];
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedGroup == 'Staf & Pelajar UPSI' ? AppTheme.primaryNavy : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              bottomLeft: Radius.circular(12),
+                            ),
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          child: Text(
+                            "UPSI Staff/Student",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedGroup == 'Staf & Pelajar UPSI' ? Colors.white : AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedGroup = 'Orang Awam';
+                            _selectedSubCategory = _categories[_selectedGroup]![0]['name'];
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedGroup == 'Orang Awam' ? AppTheme.primaryNavy : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          child: Text(
+                            "Orang Awam (Public)",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedGroup == 'Orang Awam' ? Colors.white : AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Subcategory Dropdown list
+                DropdownButtonFormField<String>(
+                  key: ValueKey(_selectedGroup),
+                  initialValue: _selectedSubCategory,
+                  style: GoogleFonts.outfit(color: AppTheme.textPrimary, fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: "Ticket Option",
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  items: availableSubCategories.map((item) {
+                    final double price = (item['price'] as num).toDouble();
+                    final priceStr = price == 0.0 ? "Percuma" : "RM ${price.toStringAsFixed(2)}";
+                    return DropdownMenuItem<String>(
+                      value: item['name'] as String,
+                      child: Text("${item['name']} ($priceStr)"),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedSubCategory = val ?? availableSubCategories[0]['name'];
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // Requirements notice (Catatan Card)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.goldLight.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.info, color: AppTheme.primaryNavy, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Catatan Penting:",
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryNavy,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "${_getNotes()} semasa melapor diri di kolam renang.",
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 3. SELECT TIME SLOT
+                Text(
+                  "3. Select Session Time",
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -676,14 +1053,14 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // 3. SELECT QUANTITY
+                // 4. QUANTITY SELECTOR
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "3. Ticket Quantity",
+                      "4. Ticket Quantity",
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -726,7 +1103,96 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
           ),
         ),
 
-        // Floating Booking Cart Bar (ZUS style slide bar)
+        // Floating Cart Summary Bar (appears when items are in cart)
+        if (_cart.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.accentGold,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.accentGold.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryNavy,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        "${_cart.length}",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Peti Tiket Anda (Cart)",
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryNavy,
+                          ),
+                        ),
+                        Text(
+                          "RM ${_getCartSubtotal().toStringAsFixed(2)}",
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: AppTheme.primaryNavy.withValues(alpha: 0.8),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: _showCheckoutSheet,
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Checkout",
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(LucideIcons.arrowRight, size: 14),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Main Bottom Selection Action Bar
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -748,14 +1214,14 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Total Price",
+                    "Selected Price",
                     style: GoogleFonts.outfit(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
                     ),
                   ),
                   Text(
-                    "RM ${subtotal.toStringAsFixed(2)}",
+                    "RM ${selectedSubtotal.toStringAsFixed(2)}",
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -765,19 +1231,21 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 ],
               ),
               ElevatedButton(
-                onPressed: _showCheckoutSheet,
+                onPressed: _addToCart,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  backgroundColor: AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.shoppingBag, size: 18),
+                    const Icon(LucideIcons.plusCircle, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      "Check Out",
+                      "Add to Cart",
                       style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                     ),
                   ],

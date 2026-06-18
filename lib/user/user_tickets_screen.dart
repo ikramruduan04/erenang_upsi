@@ -128,7 +128,10 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
 
                       // Details Grid
                       _buildTicketDetailRow("Swimmer Name", booking.name),
-                      _buildTicketDetailRow("Category", booking.userType),
+                      _buildTicketDetailRow("Category Group", booking.userType),
+                      _buildTicketDetailRow("Ticket Type", booking.subCategory),
+                      if (booking.notes.isNotEmpty)
+                        _buildTicketDetailRow("Catatan", booking.notes),
                       if (booking.upsiId != null && booking.upsiId!.isNotEmpty)
                         _buildTicketDetailRow("UPSI ID", booking.upsiId!),
                       _buildTicketDetailRow("Pool Section", booking.poolType),

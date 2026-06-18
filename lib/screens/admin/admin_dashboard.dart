@@ -81,32 +81,57 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final upsiIdController = TextEditingController();
-    String userType = 'Student';
-    String poolType = 'Olympic Pool';
+    
+    // Selection states
+    String group = 'Staf & Pelajar UPSI';
+    String subCategory = 'Pelajar UPSI';
+    String poolType = 'Kolam Utama';
     String timeSlot = '08:00 AM - 10:00 AM';
     int quantity = 1;
+
+    // Pricing categories
+    final Map<String, List<Map<String, dynamic>>> categories = {
+      'Staf & Pelajar UPSI': [
+        {'name': 'Pelajar UPSI', 'price': 0.0, 'note': 'Sila bawa kad pelajar'},
+        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Suami/Isteri', 'price': 3.0, 'note': 'Sila bawa kad pekerja'},
+        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (0-7 tahun)', 'price': 0.0, 'note': 'Sila bawa kad pekerja'},
+        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (8 tahun ke atas)', 'price': 3.0, 'note': 'Sila bawa kad pekerja'},
+        {'name': 'Staf Holding/Sambilan/RA', 'price': 3.0, 'note': 'Sila bawa kad pekerja/bukti perkhidmatan'},
+      ],
+      'Orang Awam': [
+        {'name': 'Kanak-kanak (0-4 tahun)', 'price': 0.0, 'note': 'Sila bawa MyKid'},
+        {'name': 'Kanak-kanak (5-7 tahun)', 'price': 1.0, 'note': 'Sila bawa MyKid'},
+        {'name': 'Pelajar Sekolah & IPT (8-18 tahun)', 'price': 5.0, 'note': 'Sila bawa kad pelajar/Kad Pengenalan'},
+        {'name': 'Dewasa', 'price': 10.0, 'note': 'Sila bawa kad pengenalan'},
+        {'name': 'Warga Emas (60 tahun ke atas)', 'price': 5.0, 'note': 'Sila bawa kad pengenalan'},
+        {'name': 'Pesara / Pencen Kerajaan', 'price': 5.0, 'note': 'Sila bawa kad pencen'},
+        {'name': 'OKU - Kanak-kanak (0-7 tahun)', 'price': 0.0, 'note': 'Sila bawa kad OKU'},
+        {'name': 'OKU - Kanak-kanak (8-17 tahun)', 'price': 3.0, 'note': 'Sila bawa kad OKU'},
+        {'name': 'OKU - Dewasa', 'price': 5.0, 'note': 'Sila bawa kad OKU'},
+      ],
+    };
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            // Price calculation helper
+            final availableSubs = categories[group] ?? [];
+            
             double getPricePerTicket() {
-              double base = 5.00;
-              if (poolType == 'Olympic Pool') {
-                if (userType == 'Student') base = 2.00;
-                if (userType == 'Staff') base = 3.00;
-              } else if (poolType == 'Training Pool') {
-                if (userType == 'Student') base = 1.50;
-                if (userType == 'Staff') base = 2.50;
-                if (userType == 'Public') base = 4.00;
-              } else { // Kids Pool
-                if (userType == 'Student') base = 1.00;
-                if (userType == 'Staff') base = 2.00;
-                if (userType == 'Public') base = 3.00;
-              }
-              return base;
+              final item = availableSubs.firstWhere(
+                (element) => element['name'] == subCategory,
+                orElse: () => {'price': 0.0},
+              );
+              return (item['price'] as num).toDouble();
+            }
+
+            String getNotes() {
+              final item = availableSubs.firstWhere(
+                (element) => element['name'] == subCategory,
+                orElse: () => {'note': ''},
+              );
+              return item['note'] as String;
             }
 
             double total = getPricePerTicket() * quantity;
@@ -130,45 +155,71 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     TextField(
                       controller: emailController,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "Email"),
+                      decoration: const InputDecoration(labelText: "Email (Optional)"),
                     ),
                     const SizedBox(height: 12),
+                    
+                    // Group Category Selector
                     DropdownButtonFormField<String>(
-                      initialValue: userType,
+                      initialValue: group,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "User Category"),
-                      items: ['Student', 'Staff', 'Public'].map((t) {
-                        return DropdownMenuItem(value: t, child: Text(t));
+                      decoration: const InputDecoration(labelText: "Category Group"),
+                      items: ['Staf & Pelajar UPSI', 'Orang Awam'].map((g) {
+                        return DropdownMenuItem(value: g, child: Text(g));
                       }).toList(),
                       onChanged: (val) {
                         setModalState(() {
-                          userType = val ?? 'Student';
+                          group = val ?? 'Staf & Pelajar UPSI';
+                          subCategory = categories[group]![0]['name'] as String;
                         });
                       },
                     ),
                     const SizedBox(height: 12),
-                    if (userType != 'Public') ...[
+
+                    // Ticket Sub-category Selector
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(group),
+                      initialValue: subCategory,
+                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                      decoration: const InputDecoration(labelText: "Ticket Type"),
+                      items: availableSubs.map((item) {
+                        final String name = item['name'] as String;
+                        final double price = (item['price'] as num).toDouble();
+                        final priceStr = price == 0.0 ? "Percuma" : "RM ${price.toStringAsFixed(2)}";
+                        return DropdownMenuItem(value: name, child: Text("$name ($priceStr)"));
+                      }).toList(),
+                      onChanged: (val) {
+                        setModalState(() {
+                          subCategory = val ?? availableSubs[0]['name'] as String;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (group != 'Orang Awam') ...[
                       TextField(
                         controller: upsiIdController,
                         style: const TextStyle(color: AppTheme.textPrimary),
-                        decoration: InputDecoration(labelText: "$userType ID Number"),
+                        decoration: const InputDecoration(labelText: "UPSI Student/Staff ID"),
                       ),
                       const SizedBox(height: 12),
                     ],
+
                     DropdownButtonFormField<String>(
                       initialValue: poolType,
                       style: const TextStyle(color: AppTheme.textPrimary),
                       decoration: const InputDecoration(labelText: "Pool Section"),
-                      items: ['Olympic Pool', 'Training Pool', 'Kids Pool'].map((p) {
+                      items: ['Kolam Utama', 'Kolam Renang Biasa', 'Kolam Kanak-Kanak'].map((p) {
                         return DropdownMenuItem(value: p, child: Text(p));
                       }).toList(),
                       onChanged: (val) {
                         setModalState(() {
-                          poolType = val ?? 'Olympic Pool';
+                          poolType = val ?? 'Kolam Utama';
                         });
                       },
                     ),
                     const SizedBox(height: 12),
+
                     DropdownButtonFormField<String>(
                       initialValue: timeSlot,
                       style: const TextStyle(color: AppTheme.textPrimary),
@@ -189,6 +240,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       },
                     ),
                     const SizedBox(height: 12),
+
+                    // Catatan box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.goldLight.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        "Catatan: Sila pastikan pelawat membawa dokumen: ${getNotes()}",
+                        style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textPrimary),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -252,7 +320,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       name: nameController.text.trim(),
                       email: emailController.text.trim().isNotEmpty ? emailController.text.trim() : null,
                       upsiId: upsiIdController.text.trim().isNotEmpty ? upsiIdController.text.trim() : null,
-                      userType: userType,
+                      userType: group,
+                      subCategory: subCategory,
                       poolType: poolType,
                       bookingDate: DateTime.now(),
                       timeSlot: timeSlot,
@@ -260,6 +329,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       totalPrice: total,
                       status: 'Approved',
                       qrCode: 'UP-$uniqueId-WALKIN',
+                      notes: getNotes(),
                       createdAt: DateTime.now(),
                     );
 
@@ -623,7 +693,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            booking.userType,
+                            "${booking.userType} (${booking.subCategory})",
                             style: GoogleFonts.outfit(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
