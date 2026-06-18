@@ -86,7 +86,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     String group = 'Staf & Pelajar UPSI';
     String subCategory = 'Pelajar UPSI';
     String poolType = 'Kolam Utama';
-    String timeSlot = '08:00 AM - 10:00 AM';
+    String timeSlot = 'Sesi Petang (2.30 ptg - 6.30 ptg)';
     int quantity = 1;
 
     // Pricing categories
@@ -225,17 +225,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: const TextStyle(color: AppTheme.textPrimary),
                       decoration: const InputDecoration(labelText: "Time Session"),
                       items: [
-                        '08:00 AM - 10:00 AM',
-                        '10:00 AM - 12:00 PM',
-                        '02:00 PM - 04:00 PM',
-                        '04:00 PM - 06:00 PM',
-                        '08:00 PM - 10:00 PM'
+                        'Sesi Pagi (8.30 pg - 12.30 tghari)',
+                        'Sesi Petang (2.30 ptg - 6.30 ptg)',
+                        'Sesi Petang - Ladies Day (2.30 ptg - 6.30 ptg)',
+                        'Sesi Petang (3.00 ptg - 6.30 ptg)'
                       ].map((s) {
                         return DropdownMenuItem(value: s, child: Text(s));
                       }).toList(),
                       onChanged: (val) {
                         setModalState(() {
-                          timeSlot = val ?? '08:00 AM - 10:00 AM';
+                          timeSlot = val ?? 'Sesi Petang (2.30 ptg - 6.30 ptg)';
                         });
                       },
                     ),

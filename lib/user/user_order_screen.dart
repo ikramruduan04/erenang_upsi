@@ -55,12 +55,12 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   // Cart state
   final List<CartItem> _cart = [];
 
-  // Coupon State
-  final _promoController = TextEditingController();
-  double _discountPercentage = 0.0;
-  double _flatDiscount = 0.0;
-  String? _appliedPromoCode;
-  String? _promoError;
+  @override
+  void initState() {
+    super.initState();
+    final slots = _getTimeSlotsForDate(_selectedDate);
+    _selectedSlot = slots.isNotEmpty ? slots[0] : '';
+  }
 
   // Categories & Pricing Rules Definition
   final Map<String, List<Map<String, dynamic>>> _categories = {
@@ -162,19 +162,26 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     },
   ];
 
-  // Time Slots
-  final List<String> _timeSlots = [
-    '08:00 AM - 10:00 AM',
-    '10:00 AM - 12:00 PM',
-    '02:00 PM - 04:00 PM',
-    '04:00 PM - 06:00 PM',
-    '08:00 PM - 10:00 PM',
-  ];
-
-  @override
-  void dispose() {
-    _promoController.dispose();
-    super.dispose();
+  List<String> _getTimeSlotsForDate(DateTime date) {
+    switch (date.weekday) {
+      case DateTime.monday:
+        return [];
+      case DateTime.tuesday:
+      case DateTime.thursday:
+        return ['Sesi Petang (2.30 ptg - 6.30 ptg)'];
+      case DateTime.wednesday:
+        return ['Sesi Petang - Ladies Day (2.30 ptg - 6.30 ptg)'];
+      case DateTime.friday:
+        return ['Sesi Petang (3.00 ptg - 6.30 ptg)'];
+      case DateTime.saturday:
+      case DateTime.sunday:
+        return [
+          'Sesi Pagi (8.30 pg - 12.30 tghari)',
+          'Sesi Petang (2.30 ptg - 6.30 ptg)',
+        ];
+      default:
+        return [];
+    }
   }
 
   double _getPricePerTicket() {
@@ -203,45 +210,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     return _cart.fold(0.0, (sum, item) => sum + item.totalPrice);
   }
 
-  double _getCartDiscountAmount() {
-    final subtotal = _getCartSubtotal();
-    double discount = (subtotal * _discountPercentage) + _flatDiscount;
-    if (discount > subtotal) discount = subtotal;
-    return discount;
-  }
-
   double _getCartTotalPrice() {
-    final total = _getCartSubtotal() - _getCartDiscountAmount();
-    return total < 0 ? 0.00 : total;
-  }
-
-  void _applyPromo() {
-    final code = _promoController.text.trim().toUpperCase();
-    setState(() {
-      _promoError = null;
-      if (code == 'JOMRENANG') {
-        _discountPercentage = 0.20; // 20% off
-        _flatDiscount = 0.0;
-        _appliedPromoCode = 'JOMRENANG';
-      } else if (code == 'ZUSRENANG') {
-        _flatDiscount = 1.50; // RM1.50 off
-        _discountPercentage = 0.0;
-        _appliedPromoCode = 'ZUSRENANG';
-      } else if (code.isEmpty) {
-        _promoError = 'Please enter a code.';
-      } else {
-        _promoError = 'Invalid promo code.';
-      }
-    });
-  }
-
-  void _removePromo() {
-    setState(() {
-      _appliedPromoCode = null;
-      _discountPercentage = 0.0;
-      _flatDiscount = 0.0;
-      _promoController.clear();
-    });
+    return _getCartSubtotal();
   }
 
   void _addToCart() {
@@ -291,7 +261,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             final double subtotal = _getCartSubtotal();
-            final double discount = _getCartDiscountAmount();
             final double total = _getCartTotalPrice();
             final currentUser = DatabaseService.currentUser;
 
@@ -473,57 +442,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Promo Code Input
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _promoController,
-                          style: const TextStyle(color: AppTheme.textPrimary),
-                          decoration: InputDecoration(
-                            hintText: "Enter Promo Code (e.g. JOMRENANG)",
-                            errorText: _promoError,
-                            suffixIcon: _appliedPromoCode != null
-                                ? IconButton(
-                                    icon: const Icon(Icons.cancel, color: AppTheme.textSecondary),
-                                    onPressed: () {
-                                      _removePromo();
-                                      setModalState(() {});
-                                    },
-                                  )
-                                : null,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          _applyPromo();
-                          setModalState(() {});
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentGold,
-                          foregroundColor: AppTheme.primaryNavy,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                        ),
-                        child: const Text("Apply"),
-                      ),
-                    ],
-                  ),
-                  if (_appliedPromoCode != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(LucideIcons.check, color: AppTheme.success, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Promo code $_appliedPromoCode successfully applied!",
-                          style: GoogleFonts.outfit(color: AppTheme.success, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
                   const Divider(height: 24, color: AppTheme.border),
 
                   // Price Breakdown
@@ -534,16 +452,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                       Text("RM ${subtotal.toStringAsFixed(2)}", style: GoogleFonts.outfit(color: AppTheme.textPrimary)),
                     ],
                   ),
-                  if (discount > 0) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Discount", style: GoogleFonts.outfit(color: AppTheme.success)),
-                        Text("-RM ${discount.toStringAsFixed(2)}", style: GoogleFonts.outfit(color: AppTheme.success)),
-                      ],
-                    ),
-                  ],
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -620,13 +528,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     for (int i = 0; i < _cart.length; i++) {
       final item = _cart[i];
       final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}-$i';
-      
-      // Calculate item specific price after promo code has been distributed or applied
-      final double cartSubtotal = _getCartSubtotal();
-      final double cartDiscount = _getCartDiscountAmount();
-      final double ratio = cartSubtotal > 0 ? (item.totalPrice / cartSubtotal) : 0;
-      final double itemDiscount = cartDiscount * ratio;
-      final double finalItemPrice = item.totalPrice - itemDiscount;
 
       final newBooking = Booking(
         id: uniqueId,
@@ -640,7 +541,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         bookingDate: item.bookingDate,
         timeSlot: item.timeSlot,
         quantity: item.quantity,
-        totalPrice: finalItemPrice < 0 ? 0.00 : finalItemPrice,
+        totalPrice: item.totalPrice,
         status: 'Approved', // Auto-approved for demo purposes
         qrCode: 'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
         notes: item.notes,
@@ -731,6 +632,12 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 onTap: () {
                   setState(() {
                     _selectedDate = date;
+                    final slots = _getTimeSlotsForDate(date);
+                    if (slots.isNotEmpty) {
+                      _selectedSlot = slots.contains(_selectedSlot) ? _selectedSlot : slots[0];
+                    } else {
+                      _selectedSlot = '';
+                    }
                   });
                 },
                 child: Container(
@@ -779,6 +686,20 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // UPSI Swimming Pool Banner Image
+                Container(
+                  height: 160,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/upsi_pool.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // 1. SELECT POOL AREA
                 Text(
                   "1. Select Pool Area",
@@ -1021,37 +942,69 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _timeSlots.map((slot) {
-                    final isSelected = slot == _selectedSlot;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedSlot = slot;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                Builder(
+                  builder: (context) {
+                    final slots = _getTimeSlotsForDate(_selectedDate);
+                    if (slots.isEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primaryNavy : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isSelected ? AppTheme.primaryNavy : AppTheme.border,
-                          ),
+                          color: AppTheme.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
                         ),
-                        child: Text(
-                          slot,
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : AppTheme.textPrimary,
-                          ),
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.info, color: AppTheme.error, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Maaf, kolam ditutup pada hari Isnin sempena penyelenggaraan dan pembersihan.",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 13,
+                                  color: AppTheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      );
+                    }
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: slots.map((slot) {
+                        final isSelected = slot == _selectedSlot;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedSlot = slot;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.primaryNavy : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected ? AppTheme.primaryNavy : AppTheme.border,
+                              ),
+                            ),
+                            child: Text(
+                              slot,
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  }
                 ),
                 const SizedBox(height: 20),
 
@@ -1230,26 +1183,31 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                 ],
               ),
-              ElevatedButton(
-                onPressed: _addToCart,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  backgroundColor: AppTheme.primaryNavy,
-                  foregroundColor: Colors.white,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(LucideIcons.plusCircle, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Add to Cart",
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              Builder(
+                builder: (context) {
+                  final isClosed = _getTimeSlotsForDate(_selectedDate).isEmpty;
+                  return ElevatedButton(
+                    onPressed: isClosed ? null : _addToCart,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: isClosed ? Colors.grey : AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        Icon(isClosed ? LucideIcons.lock : LucideIcons.plusCircle, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          isClosed ? "Kolam Ditutup" : "Add to Cart",
+                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               ),
             ],
           ),

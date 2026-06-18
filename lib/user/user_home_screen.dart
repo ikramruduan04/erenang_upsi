@@ -153,7 +153,7 @@ class UserHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Book ${nextTierSessions - sessions} more sessions to unlock premium benefits & discounts!",
+                  "Book ${nextTierSessions - sessions} more sessions to unlock premium benefits!",
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.7),
@@ -187,61 +187,67 @@ class UserHomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Banner Slider (Mocked ZUS Promo Banner)
+          // Banner Slider (Mocked ZUS Promo Banner with UPSI Pool Image)
           Container(
-            height: 150,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFC5A880), Color(0xFFE3C598)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
               borderRadius: BorderRadius.circular(20),
               image: const DecorationImage(
-                // Water ripples mockup pattern
-                opacity: 0.15,
-                image: NetworkImage('https://images.unsplash.com/photo-1519817650390-64a93db51149?w=600&auto=format&fit=crop'),
+                image: AssetImage('assets/upsi_pool.png'),
                 fit: BoxFit.cover,
               ),
             ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryNavy,
-                    borderRadius: BorderRadius.circular(6),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryNavy.withValues(alpha: 0.85),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentGold,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "KOLAM RENANG UPSI",
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryNavy,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    "UPSI STUDENT SPECIAL",
+                  const SizedBox(height: 6),
+                  Text(
+                    "Beat the Heat for only RM 2.00",
                     style: GoogleFonts.outfit(
-                      fontSize: 10,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Beat the Heat for only RM 2.00",
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryNavy,
+                  Text(
+                    "Affordable swimming lanes available daily. Jom Mandi!",
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
                   ),
-                ),
-                Text(
-                  "Affordable swimming lanes available daily. Jom Mandi!",
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: AppTheme.primaryNavy.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -306,7 +312,7 @@ class UserHomeScreen extends StatelessWidget {
           _buildGuidelineItem(
             icon: LucideIcons.clock,
             title: "Operating Hours",
-            subtitle: "Daily from 8:00 AM to 10:00 PM. Clean-up breaks are scheduled between sessions.",
+            subtitle: "• Isnin: Tutup sempena penyelenggaraan & pembersihan\n• Selasa - Khamis: Sesi Petang (2.30 ptg - 6.30 ptg)\n• Rabu (Ladies Day): Sesi Petang (2.30 ptg - 6.30 ptg)\n• Jumaat: Sesi Petang (3.00 ptg - 6.30 ptg)\n• Sabtu & Ahad: Sesi Pagi (8.30 pg - 12.30 tghari) & Sesi Petang (2.30 ptg - 6.30 ptg)",
           ),
           _buildGuidelineItem(
             icon: LucideIcons.heartPulse,
