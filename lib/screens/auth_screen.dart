@@ -143,6 +143,16 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
           ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 16,
+            right: 16,
+            child: Image.asset(
+              'assets/upsi_logo.png',
+              width: 50,
+              height: 50,
+              fit: BoxFit.contain,
+            ),
+          ),
 
           Center(
             child: SingleChildScrollView(

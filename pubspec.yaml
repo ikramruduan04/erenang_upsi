@@ -19,6 +19,7 @@ dependencies:
   google_fonts: ^6.1.0 # For clean typography
   cupertino_icons: ^1.0.8
   flutter_dotenv: ^5.1.0
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -35,5 +36,6 @@ flutter:
   assets:
     - .env
     - assets/upsi_pool.png
+    - assets/upsi_logo.png
 
 

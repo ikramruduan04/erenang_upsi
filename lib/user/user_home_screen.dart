@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/app_theme.dart';
 import '../services/database_service.dart';
 
@@ -319,6 +321,208 @@ class UserHomeScreen extends StatelessWidget {
             title: "Health & Safety",
             subtitle: "Shower before entering. Do not swim if feeling unwell or under medication.",
           ),
+          const SizedBox(height: 24),
+
+          // Pool Location & Facilities Section
+          Text(
+            "Pool Location & Facilities",
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Location Detail
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(LucideIcons.mapPin, color: AppTheme.primaryNavy, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Lokasi Kolam",
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Kolam Renang Universiti Pendidikan Sultan Idris (UPSI)\nJalan Proton City, 35900 Tanjong Malim, Perak.",
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Link: https://maps.app.goo.gl/gtFbvunvHxJVHJP6A",
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: AppTheme.accentGold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          // Google Maps Buttons (Interactive Open & Copy Fallback)
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () async {
+                                  final Uri url = Uri.parse("https://maps.app.goo.gl/gtFbvunvHxJVHJP6A");
+                                  if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "Could not open maps. Copying link instead.",
+                                            style: GoogleFonts.outfit(color: Colors.white),
+                                          ),
+                                          backgroundColor: AppTheme.error,
+                                        ),
+                                      );
+                                    }
+                                    Clipboard.setData(const ClipboardData(text: "https://maps.app.goo.gl/gtFbvunvHxJVHJP6A"));
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryNavy,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primaryNavy.withValues(alpha: 0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.navigation, color: AppTheme.accentGold, size: 14),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Open Google Maps",
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              InkWell(
+                                onTap: () {
+                                  Clipboard.setData(
+                                    const ClipboardData(text: "https://maps.app.goo.gl/gtFbvunvHxJVHJP6A"),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Pautan lokasi disalin!",
+                                        style: GoogleFonts.outfit(color: Colors.white),
+                                      ),
+                                      backgroundColor: AppTheme.primaryNavy,
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppTheme.border, width: 1.5),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.copy, color: AppTheme.textSecondary, size: 14),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Copy Link",
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24, color: AppTheme.border),
+                
+                // Amenities/Facilities Detail
+                Text(
+                  "Kemudahan Kolam (Facilities & Amenities):",
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                
+                // Toilets & Shower
+                _buildAmenityRow(
+                  icon: LucideIcons.bath,
+                  label: "Tandas & Pancuran Air (Toilets & Showers)",
+                  desc: "Kemudahan tandas dan pancuran mandi yang lengkap di kedua-dua bilik lelaki dan wanita.",
+                ),
+                const SizedBox(height: 12),
+                
+                // Parking Space
+                _buildAmenityRow(
+                  icon: LucideIcons.car,
+                  label: "Kawasan Parkir (Parking Space)",
+                  desc: "Kawasan meletak kenderaan disediakan secara percuma dan luas berhampiran pintu masuk kolam.",
+                ),
+                const SizedBox(height: 12),
+                
+                // Changing Room
+                _buildAmenityRow(
+                  icon: LucideIcons.shirt,
+                  label: "Bilik Salin Pakaian (Changing Room)",
+                  desc: "Bilik persalinan berasingan yang selesa bagi menjaga privasi pengunjung.",
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -413,6 +617,63 @@ class UserHomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAmenityRow({
+    required IconData icon,
+    required String label,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.primaryNavy, Color(0xFF003884)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryNavy.withValues(alpha: 0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+            border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.3), width: 1.5),
+          ),
+          child: Icon(icon, color: AppTheme.accentGold, size: 18),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -473,6 +473,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
+              const SizedBox(width: 16),
+              Image.asset(
+                'assets/upsi_logo.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+              ),
             ],
           ),
         ),

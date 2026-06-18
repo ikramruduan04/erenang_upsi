@@ -74,6 +74,15 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
               });
             },
           ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0, left: 4.0),
+            child: Image.asset(
+              'assets/upsi_logo.png',
+              width: 32,
+              height: 32,
+              fit: BoxFit.contain,
+            ),
+          ),
         ],
       ),
       body: screens[_currentIndex],
