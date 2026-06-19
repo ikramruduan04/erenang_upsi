@@ -4,18 +4,18 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Brand Colors (ZUS Coffee Style)
   static const Color primaryNavy = Color(0xFF002F6C); // Navy Blue
-  static const Color accentGold = Color(0xFFC5A880);  // Gold
-  static const Color goldLight = Color(0xFFF1EAE0);   // Pale Gold/Cream
-  static const Color background = Color(0xFFF4F6F9);  // Light Cream-Grey
-  static const Color surface = Color(0xFFFFFFFF);     // White cards
-  static const Color border = Color(0xFFE2E8F0);      // Soft borders
-  
-  static const Color textPrimary = Color(0xFF1E293B);   // Slate 800
+  static const Color accentGold = Color(0xFFC5A880); // Gold
+  static const Color goldLight = Color(0xFFF1EAE0); // Pale Gold/Cream
+  static const Color background = Color(0xFFF4F6F9); // Light Cream-Grey
+  static const Color surface = Color(0xFFFFFFFF); // White cards
+  static const Color border = Color(0xFFE2E8F0); // Soft borders
+
+  static const Color textPrimary = Color(0xFF1E293B); // Slate 800
   static const Color textSecondary = Color(0xFF64748B); // Slate 500
-  static const Color textLight = Color(0xFF94A3B8);     // Slate 400
-  
+  static const Color textLight = Color(0xFF94A3B8); // Slate 400
+
   static const Color success = Color(0xFF10B981); // Green
-  static const Color error = Color(0xFFEF4444);   // Red
+  static const Color error = Color(0xFFEF4444); // Red
   static const Color warning = Color(0xFFF59E0B); // Orange
 
   static ThemeData get lightTheme {
@@ -29,7 +29,7 @@ class AppTheme {
         surface: surface,
         error: error,
       ),
-      
+
       // Font Family
       fontFamily: GoogleFonts.outfit().fontFamily,
 
@@ -68,7 +68,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryNavy,
@@ -113,4 +113,3 @@ class AppTheme {
   // Fallback for darkTheme configuration to prevent issues
   static ThemeData get darkTheme => lightTheme;
 }
-

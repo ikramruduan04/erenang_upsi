@@ -136,13 +136,13 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     },
     {
       'name': 'Kolam Renang Biasa',
-      'image': 'assets/upsi_pool.jpg',
+      'image': 'assets/upsi_pool_biasa.jpeg',
       'depth': '1.2 meter kedalaman',
       'desc': 'Kedalaman bersesuaian untuk latihan renang biasa dan santai.',
     },
     {
       'name': 'Kolam Kanak-Kanak',
-      'image': 'assets/upsi_pool.jpg',
+      'image': 'assets/upsi_pool_kanak.png',
       'depth': '0.5 meter kedalaman',
       'desc': 'Kawasan cetek dan selamat untuk kanak-kanak bermain air.',
     },
@@ -749,69 +749,84 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Column(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: _pools.map((pool) {
                     final String name = pool['name'];
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.border,
-                          width: 1.0,
+                    return Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: AppTheme.border.withValues(alpha: 0.5),
+                            width: 1.0,
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: AssetImage(pool['image']),
-                                fit: BoxFit.cover,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                topRight: Radius.circular(16),
+                              ),
+                              child: AspectRatio(
+                                aspectRatio: 1.0,
+                                child: Image.asset(
+                                  pool['image'],
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textPrimary,
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textPrimary,
+                                      height: 1.2,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Depth: ${pool['depth']}",
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 11,
-                                    color: AppTheme.accentGold,
-                                    fontWeight: FontWeight.w600,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Depth: ${pool['depth']}",
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      color: AppTheme.accentGold,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  pool['desc'],
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppTheme.textSecondary,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    pool['desc'],
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary,
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),

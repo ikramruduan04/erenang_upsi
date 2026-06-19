@@ -36,6 +36,8 @@ flutter:
   assets:
     - .env
     - assets/upsi_pool.jpg
+    - assets/upsi_pool_biasa.jpeg
+    - assets/upsi_pool_kanak.png
     - assets/upsi_logo.png
 
 

@@ -54,9 +54,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Booking?"),
-        content: const Text("Are you sure you want to permanently delete this booking?"),
+        content: const Text(
+          "Are you sure you want to permanently delete this booking?",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -81,7 +86,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final upsiIdController = TextEditingController();
-    
+
     // Selection states
     String group = 'Staf & Pelajar UPSI';
     String subCategory = 'Pelajar UPSI';
@@ -93,20 +98,64 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final Map<String, List<Map<String, dynamic>>> categories = {
       'Staf & Pelajar UPSI': [
         {'name': 'Pelajar UPSI', 'price': 0.0, 'note': 'Sila bawa kad pelajar'},
-        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Suami/Isteri', 'price': 3.0, 'note': 'Sila bawa kad pekerja'},
-        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (0-7 tahun)', 'price': 0.0, 'note': 'Sila bawa kad pekerja'},
-        {'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (8 tahun ke atas)', 'price': 3.0, 'note': 'Sila bawa kad pekerja'},
-        {'name': 'Staf Holding/Sambilan/RA', 'price': 3.0, 'note': 'Sila bawa kad pekerja/bukti perkhidmatan'},
+        {
+          'name': 'Staf/SUKSIS/SISPA/PALAPES - Suami/Isteri',
+          'price': 3.0,
+          'note': 'Sila bawa kad pekerja',
+        },
+        {
+          'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (0-7 tahun)',
+          'price': 0.0,
+          'note': 'Sila bawa kad pekerja',
+        },
+        {
+          'name': 'Staf/SUKSIS/SISPA/PALAPES - Anak (8 tahun ke atas)',
+          'price': 3.0,
+          'note': 'Sila bawa kad pekerja',
+        },
+        {
+          'name': 'Staf Holding/Sambilan/RA',
+          'price': 3.0,
+          'note': 'Sila bawa kad pekerja/bukti perkhidmatan',
+        },
       ],
       'Orang Awam': [
-        {'name': 'Kanak-kanak (0-4 tahun)', 'price': 0.0, 'note': 'Sila bawa MyKid'},
-        {'name': 'Kanak-kanak (5-7 tahun)', 'price': 1.0, 'note': 'Sila bawa MyKid'},
-        {'name': 'Pelajar Sekolah & IPT (8-18 tahun)', 'price': 5.0, 'note': 'Sila bawa kad pelajar/Kad Pengenalan'},
+        {
+          'name': 'Kanak-kanak (0-4 tahun)',
+          'price': 0.0,
+          'note': 'Sila bawa MyKid',
+        },
+        {
+          'name': 'Kanak-kanak (5-7 tahun)',
+          'price': 1.0,
+          'note': 'Sila bawa MyKid',
+        },
+        {
+          'name': 'Pelajar Sekolah & IPT (8-18 tahun)',
+          'price': 5.0,
+          'note': 'Sila bawa kad pelajar/Kad Pengenalan',
+        },
         {'name': 'Dewasa', 'price': 10.0, 'note': 'Sila bawa kad pengenalan'},
-        {'name': 'Warga Emas (60 tahun ke atas)', 'price': 5.0, 'note': 'Sila bawa kad pengenalan'},
-        {'name': 'Pesara / Pencen Kerajaan', 'price': 5.0, 'note': 'Sila bawa kad pencen'},
-        {'name': 'OKU - Kanak-kanak (0-7 tahun)', 'price': 0.0, 'note': 'Sila bawa kad OKU'},
-        {'name': 'OKU - Kanak-kanak (8-17 tahun)', 'price': 3.0, 'note': 'Sila bawa kad OKU'},
+        {
+          'name': 'Warga Emas (60 tahun ke atas)',
+          'price': 5.0,
+          'note': 'Sila bawa kad pengenalan',
+        },
+        {
+          'name': 'Pesara / Pencen Kerajaan',
+          'price': 5.0,
+          'note': 'Sila bawa kad pencen',
+        },
+        {
+          'name': 'OKU - Kanak-kanak (0-7 tahun)',
+          'price': 0.0,
+          'note': 'Sila bawa kad OKU',
+        },
+        {
+          'name': 'OKU - Kanak-kanak (8-17 tahun)',
+          'price': 3.0,
+          'note': 'Sila bawa kad OKU',
+        },
         {'name': 'OKU - Dewasa', 'price': 5.0, 'note': 'Sila bawa kad OKU'},
       ],
     };
@@ -117,7 +166,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             final availableSubs = categories[group] ?? [];
-            
+
             double getPricePerTicket() {
               final item = availableSubs.firstWhere(
                 (element) => element['name'] == subCategory,
@@ -137,7 +186,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             double total = getPricePerTicket() * quantity;
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Text(
                 "Manual Walk-In Creator",
                 style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
@@ -155,15 +206,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     TextField(
                       controller: emailController,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "Email (Optional)"),
+                      decoration: const InputDecoration(
+                        labelText: "Email (Optional)",
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Group Category Selector
                     DropdownButtonFormField<String>(
                       initialValue: group,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "Category Group"),
+                      decoration: const InputDecoration(
+                        labelText: "Category Group",
+                      ),
                       items: ['Staf & Pelajar UPSI', 'Orang Awam'].map((g) {
                         return DropdownMenuItem(value: g, child: Text(g));
                       }).toList(),
@@ -180,17 +235,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     DropdownButtonFormField<String>(
                       key: ValueKey(group),
                       initialValue: subCategory,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-                      decoration: const InputDecoration(labelText: "Ticket Type"),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: "Ticket Type",
+                      ),
                       items: availableSubs.map((item) {
                         final String name = item['name'] as String;
                         final double price = (item['price'] as num).toDouble();
-                        final priceStr = price == 0.0 ? "Percuma" : "RM ${price.toStringAsFixed(2)}";
-                        return DropdownMenuItem(value: name, child: Text("$name ($priceStr)"));
+                        final priceStr = price == 0.0
+                            ? "Percuma"
+                            : "RM ${price.toStringAsFixed(2)}";
+                        return DropdownMenuItem(
+                          value: name,
+                          child: Text("$name ($priceStr)"),
+                        );
                       }).toList(),
                       onChanged: (val) {
                         setModalState(() {
-                          subCategory = val ?? availableSubs[0]['name'] as String;
+                          subCategory =
+                              val ?? availableSubs[0]['name'] as String;
                         });
                       },
                     ),
@@ -200,7 +266,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       TextField(
                         controller: upsiIdController,
                         style: const TextStyle(color: AppTheme.textPrimary),
-                        decoration: const InputDecoration(labelText: "UPSI Student/Staff ID"),
+                        decoration: const InputDecoration(
+                          labelText: "UPSI Student/Staff ID",
+                        ),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -208,10 +276,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     DropdownButtonFormField<String>(
                       initialValue: poolType,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "Pool Section"),
-                      items: ['Kolam Utama', 'Kolam Renang Biasa', 'Kolam Kanak-Kanak'].map((p) {
-                        return DropdownMenuItem(value: p, child: Text(p));
-                      }).toList(),
+                      decoration: const InputDecoration(
+                        labelText: "Pool Section",
+                      ),
+                      items:
+                          [
+                            'Kolam Utama',
+                            'Kolam Renang Biasa',
+                            'Kolam Kanak-Kanak',
+                          ].map((p) {
+                            return DropdownMenuItem(value: p, child: Text(p));
+                          }).toList(),
                       onChanged: (val) {
                         setModalState(() {
                           poolType = val ?? 'Kolam Utama';
@@ -223,15 +298,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     DropdownButtonFormField<String>(
                       initialValue: timeSlot,
                       style: const TextStyle(color: AppTheme.textPrimary),
-                      decoration: const InputDecoration(labelText: "Time Session"),
-                      items: [
-                        'Sesi Pagi (8.30 pg - 12.30 tghari)',
-                        'Sesi Petang (2.30 ptg - 6.30 ptg)',
-                        'Sesi Petang - Ladies Day (2.30 ptg - 6.30 ptg)',
-                        'Sesi Petang (3.00 ptg - 6.30 ptg)'
-                      ].map((s) {
-                        return DropdownMenuItem(value: s, child: Text(s));
-                      }).toList(),
+                      decoration: const InputDecoration(
+                        labelText: "Time Session",
+                      ),
+                      items:
+                          [
+                            'Sesi Pagi (8.30 pg - 12.30 tghari)',
+                            'Sesi Petang (2.30 ptg - 6.30 ptg)',
+                            'Sesi Petang - Ladies Day (2.30 ptg - 6.30 ptg)',
+                            'Sesi Petang (3.00 ptg - 6.30 ptg)',
+                          ].map((s) {
+                            return DropdownMenuItem(value: s, child: Text(s));
+                          }).toList(),
                       onChanged: (val) {
                         setModalState(() {
                           timeSlot = val ?? 'Sesi Petang (2.30 ptg - 6.30 ptg)';
@@ -247,11 +325,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       decoration: BoxDecoration(
                         color: AppTheme.goldLight.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: AppTheme.accentGold.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         "Catatan: Sila pastikan pelawat membawa dokumen: ${getNotes()}",
-                        style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textPrimary),
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -261,7 +344,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       children: [
                         Text(
                           "Quantity:",
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Row(
                           children: [
@@ -273,7 +358,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 }
                               },
                             ),
-                            Text("$quantity", style: const TextStyle(fontSize: 16)),
+                            Text(
+                              "$quantity",
+                              style: const TextStyle(fontSize: 16),
+                            ),
                             IconButton(
                               icon: const Icon(LucideIcons.plusCircle),
                               onPressed: () {
@@ -310,15 +398,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ElevatedButton(
                   onPressed: () async {
                     if (nameController.text.trim().isEmpty) return;
-                    
-                    final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
-                    final uniqueId = 'W-${timeStamp.substring(timeStamp.length - 6)}';
-                    
+
+                    final timeStamp = DateTime.now().millisecondsSinceEpoch
+                        .toString();
+                    final uniqueId =
+                        'W-${timeStamp.substring(timeStamp.length - 6)}';
+
                     final newBooking = Booking(
                       id: uniqueId,
                       name: nameController.text.trim(),
-                      email: emailController.text.trim().isNotEmpty ? emailController.text.trim() : null,
-                      upsiId: upsiIdController.text.trim().isNotEmpty ? upsiIdController.text.trim() : null,
+                      email: emailController.text.trim().isNotEmpty
+                          ? emailController.text.trim()
+                          : null,
+                      upsiId: upsiIdController.text.trim().isNotEmpty
+                          ? upsiIdController.text.trim()
+                          : null,
                       userType: group,
                       subCategory: subCategory,
                       poolType: poolType,
@@ -354,7 +448,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     // Filter Bookings
     final filtered = _bookings.where((b) {
-      final matchesSearch = b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch =
+          b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           (b.email ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
           (b.upsiId ?? '').toLowerCase().contains(_searchQuery.toLowerCase()) ||
           b.id.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -366,8 +461,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     // Stats calculations
     final int totalCount = _bookings.length;
-    final int pendingCount = _bookings.where((b) => b.status == 'Pending').length;
-    final int activeCount = _bookings.where((b) => b.status == 'Checked In').length;
+    final int pendingCount = _bookings
+        .where((b) => b.status == 'Pending')
+        .length;
+    final int activeCount = _bookings
+        .where((b) => b.status == 'Checked In')
+        .length;
     final double revenue = _bookings
         .where((b) => b.status != 'Cancelled')
         .fold(0.0, (sum, b) => sum + b.totalPrice);
@@ -381,7 +480,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.droplets, color: AppTheme.accentGold, size: 24),
+              const Icon(
+                LucideIcons.droplets,
+                color: AppTheme.accentGold,
+                size: 24,
+              ),
               const SizedBox(width: 8),
               Text(
                 "e-Renang Admin",
@@ -438,7 +541,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               if (!isWide) ...[
                 Builder(
                   builder: (context) => IconButton(
-                    icon: const Icon(LucideIcons.menu, color: AppTheme.primaryNavy),
+                    icon: const Icon(
+                      LucideIcons.menu,
+                      color: AppTheme.primaryNavy,
+                    ),
                     onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
                 ),
@@ -454,10 +560,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   },
                   decoration: const InputDecoration(
                     hintText: 'Search bookings by name, ID or reference...',
-                    prefixIcon: Icon(LucideIcons.search, color: AppTheme.textSecondary),
+                    prefixIcon: Icon(
+                      LucideIcons.search,
+                      color: AppTheme.textSecondary,
+                    ),
                     filled: true,
                     fillColor: AppTheme.background,
-                    contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 16,
+                    ),
                   ),
                 ),
               ),
@@ -469,15 +581,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentGold,
                   foregroundColor: AppTheme.primaryNavy,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Image.asset(
                 'assets/upsi_logo.png',
-                width: 36,
-                height: 36,
+                width: 48,
+                height: 48,
                 fit: BoxFit.contain,
               ),
             ],
@@ -488,7 +606,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         // Core Dashboard Body
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppTheme.accentGold),
+                )
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -497,21 +617,44 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       // Stats Counters Row
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          int crossAxis = constraints.maxWidth > 900 ? 4 : (constraints.maxWidth > 500 ? 2 : 1);
+                          int crossAxis = constraints.maxWidth > 900
+                              ? 4
+                              : (constraints.maxWidth > 500 ? 2 : 1);
                           return GridView(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxis,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 2.2,
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxis,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 2.2,
+                                ),
                             children: [
-                              _buildStatCard("Total Bookings", "$totalCount", LucideIcons.calendar, Colors.blue),
-                              _buildStatCard("Pending Requests", "$pendingCount", LucideIcons.clock, Colors.orange),
-                              _buildStatCard("In Pool Now", "$activeCount", LucideIcons.droplets, Colors.teal),
-                              _buildStatCard("Total Revenue", "RM ${revenue.toStringAsFixed(2)}", LucideIcons.coins, Colors.green),
+                              _buildStatCard(
+                                "Total Bookings",
+                                "$totalCount",
+                                LucideIcons.calendar,
+                                Colors.blue,
+                              ),
+                              _buildStatCard(
+                                "Pending Requests",
+                                "$pendingCount",
+                                LucideIcons.clock,
+                                Colors.orange,
+                              ),
+                              _buildStatCard(
+                                "In Pool Now",
+                                "$activeCount",
+                                LucideIcons.droplets,
+                                Colors.teal,
+                              ),
+                              _buildStatCard(
+                                "Total Revenue",
+                                "RM ${revenue.toStringAsFixed(2)}",
+                                LucideIcons.coins,
+                                Colors.green,
+                              ),
                             ],
                           );
                         },
@@ -534,10 +677,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           DropdownButton<String>(
                             value: _statusFilter,
                             underline: const SizedBox(),
-                            style: GoogleFonts.outfit(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
-                            items: ['All', 'Pending', 'Approved', 'Checked In', 'Cancelled'].map((f) {
-                              return DropdownMenuItem(value: f, child: Text(f));
-                            }).toList(),
+                            style: GoogleFonts.outfit(
+                              color: AppTheme.primaryNavy,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            items:
+                                [
+                                  'All',
+                                  'Pending',
+                                  'Approved',
+                                  'Checked In',
+                                  'Cancelled',
+                                ].map((f) {
+                                  return DropdownMenuItem(
+                                    value: f,
+                                    child: Text(f),
+                                  );
+                                }).toList(),
                             onChanged: (val) {
                               setState(() {
                                 _statusFilter = val ?? 'All';
@@ -561,7 +717,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           child: Center(
                             child: Text(
                               "No matching bookings found.",
-                              style: GoogleFonts.outfit(color: AppTheme.textSecondary),
+                              style: GoogleFonts.outfit(
+                                color: AppTheme.textSecondary,
+                              ),
                             ),
                           ),
                         )
@@ -593,7 +751,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -693,7 +856,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.goldLight,
                             borderRadius: BorderRadius.circular(6),
@@ -712,12 +878,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     const SizedBox(height: 6),
                     Text(
                       "ID: ${booking.id} | ${booking.poolType} | ${booking.timeSlot}",
-                      style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textSecondary),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                     if (booking.email != null && booking.email!.isNotEmpty)
                       Text(
                         "Email: ${booking.email} ${booking.upsiId != null && booking.upsiId!.isNotEmpty ? '| ID: ${booking.upsiId!}' : ''}",
-                        style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textSecondary),
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                   ],
                 ),
@@ -728,7 +900,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -756,7 +931,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
           const Divider(height: 20, color: AppTheme.border),
-          
+
           // Operational Controls for Admin
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -767,7 +942,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   icon: const Icon(LucideIcons.checkCircle, size: 14),
                   label: const Text("Approve"),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
                   ),
                 ),
@@ -778,11 +956,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   label: const Text("Check In"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
                   ),
                 ),
-              if (booking.status != 'Cancelled' && booking.status != 'Checked In') ...[
+              if (booking.status != 'Cancelled' &&
+                  booking.status != 'Checked In') ...[
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () => _updateStatus(booking.id, 'Cancelled'),
@@ -791,14 +973,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.orange,
                     side: const BorderSide(color: Colors.orange),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
                   ),
                 ),
               ],
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(LucideIcons.trash2, color: AppTheme.error, size: 18),
+                icon: const Icon(
+                  LucideIcons.trash2,
+                  color: AppTheme.error,
+                  size: 18,
+                ),
                 onPressed: () => _deleteBooking(booking.id),
               ),
             ],
@@ -832,21 +1021,27 @@ class _SidebarItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           decoration: BoxDecoration(
-            color: isActive ? AppTheme.accentGold.withValues(alpha: 0.15) : Colors.transparent,
+            color: isActive
+                ? AppTheme.accentGold.withValues(alpha: 0.15)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: isActive ? AppTheme.accentGold : Colors.white.withValues(alpha: 0.6),
+                color: isActive
+                    ? AppTheme.accentGold
+                    : Colors.white.withValues(alpha: 0.6),
                 size: 20,
               ),
               const SizedBox(width: 16),
               Text(
                 label,
                 style: GoogleFonts.outfit(
-                  color: isActive ? AppTheme.accentGold : Colors.white.withValues(alpha: 0.8),
+                  color: isActive
+                      ? AppTheme.accentGold
+                      : Colors.white.withValues(alpha: 0.8),
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -857,4 +1052,3 @@ class _SidebarItem extends StatelessWidget {
     );
   }
 }
-

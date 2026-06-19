@@ -78,8 +78,8 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
             padding: const EdgeInsets.only(right: 16.0, left: 4.0),
             child: Image.asset(
               'assets/upsi_logo.png',
-              width: 32,
-              height: 32,
+              width: 48,
+              height: 48,
               fit: BoxFit.contain,
             ),
           ),

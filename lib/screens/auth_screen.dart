@@ -112,413 +112,419 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Widget _buildLoginForm(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 450),
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tab Selector
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isAdminTab = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: !_isAdminTab ? AppTheme.primaryNavy : Colors.transparent,
+                          width: 2.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      "User Portal",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: !_isAdminTab ? AppTheme.primaryNavy : AppTheme.textLight,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isAdminTab = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _isAdminTab ? AppTheme.primaryNavy : Colors.transparent,
+                          width: 2.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      "Admin Portal",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: _isAdminTab ? AppTheme.primaryNavy : AppTheme.textLight,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          if (!_isAdminTab) ...[
+            Text(
+              "Join the Renang Club",
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _nameController,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: const InputDecoration(
+                labelText: "Full Name",
+                prefixIcon: Icon(LucideIcons.user, color: AppTheme.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _emailController,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: "Email Address",
+                prefixIcon: Icon(LucideIcons.mail, color: AppTheme.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _userType,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: const InputDecoration(
+                labelText: "User Category",
+                prefixIcon: Icon(LucideIcons.graduationCap, color: AppTheme.textSecondary),
+              ),
+              items: ['Student', 'Staff', 'Public'].map((type) {
+                return DropdownMenuItem(value: type, child: Text(type));
+              }).toList(),
+              onChanged: (val) {
+                setState(() {
+                  _userType = val ?? 'Student';
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            if (_userType != 'Public')
+              TextField(
+                controller: _upsiIdController,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                decoration: InputDecoration(
+                  labelText: "$_userType ID Number",
+                  prefixIcon: const Icon(LucideIcons.creditCard, color: AppTheme.textSecondary),
+                ),
+              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _handleUserLogin,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text("Enter Booking Portal"),
+            ),
+          ] else ...[
+            Text(
+              "Pool Operator Sign In",
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_adminError != null) ...[
+              Text(
+                _adminError!,
+                style: const TextStyle(color: Colors.red, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+            ],
+            TextField(
+              controller: _adminUsernameController,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: const InputDecoration(
+                labelText: "Username",
+                prefixIcon: Icon(LucideIcons.userCheck, color: AppTheme.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _adminPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: const InputDecoration(
+                labelText: "Password",
+                prefixIcon: Icon(LucideIcons.lock, color: AppTheme.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _handleAdminLogin,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: AppTheme.accentGold,
+                foregroundColor: AppTheme.primaryNavy,
+              ),
+              child: const Text("Admin Sign In"),
+            ),
+          ],
+          const SizedBox(height: 20),
+          const Row(
+            children: [
+              Expanded(child: Divider(color: AppTheme.border)),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  "DEMO QUICK ACCESS",
+                  style: TextStyle(
+                    color: AppTheme.textLight,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: AppTheme.border)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _handleDemoLogin('student'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                  child: const Text("Student"),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _handleDemoLogin('public'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                  child: const Text("Guest"),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _handleDemoLogin('admin'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                  child: const Text("Admin"),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryNavy,
-      body: Stack(
-        children: [
-          // Background swimming pool subtle patterns (Stylized wave elements)
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.03),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.accentGold.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 16,
-            right: 16,
-            child: Image.asset(
-              'assets/upsi_logo.png',
-              width: 50,
-              height: 50,
-              fit: BoxFit.contain,
-            ),
-          ),
+      backgroundColor: AppTheme.background,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth > 800;
 
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo/Header
-                  Container(
-                    width: 70,
-                    height: 70,
+          Widget rightSide = Container(
+            color: AppTheme.background,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top + 24,
+                  right: 24,
+                  child: Image.asset(
+                    'assets/upsi_logo.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                    child: _buildLoginForm(context),
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (isDesktop) {
+            return Row(
+              children: [
+                // Left Side: Image and Text
+                Expanded(
+                  flex: 5,
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppTheme.accentGold.withValues(alpha: 0.4),
-                        width: 1.5,
+                      color: AppTheme.primaryNavy,
+                      image: DecorationImage(
+                        image: const AssetImage('assets/upsi_pool.jpg'),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withValues(alpha: 0.6),
+                          BlendMode.darken,
+                        ),
                       ),
                     ),
-                    child: const Icon(
-                      LucideIcons.droplets,
-                      color: AppTheme.accentGold,
-                      size: 36,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "e-Renang UPSI",
-                    style: GoogleFonts.outfit(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  Text(
-                    "PREMIUM SWIMMING POOL BOOKING",
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.accentGold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Login Card
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 450),
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Tab Selector
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _isAdminTab = false),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: !_isAdminTab
-                                            ? AppTheme.primaryNavy
-                                            : Colors.transparent,
-                                        width: 2.5,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "User Portal",
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: !_isAdminTab
-                                          ? AppTheme.primaryNavy
-                                          : AppTheme.textLight,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => _isAdminTab = true),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: _isAdminTab
-                                            ? AppTheme.primaryNavy
-                                            : Colors.transparent,
-                                        width: 2.5,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "Admin Portal",
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: _isAdminTab
-                                          ? AppTheme.primaryNavy
-                                          : AppTheme.textLight,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        if (!_isAdminTab) ...[
-                          // USER LOGIN FORM
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            "Join the Renang Club",
+                            "e-Renang",
                             style: GoogleFonts.outfit(
-                              fontSize: 18,
+                              fontSize: 64,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              color: Colors.white,
+                              letterSpacing: 2.0,
                             ),
                           ),
                           const SizedBox(height: 16),
-
-                          // Name Input
-                          TextField(
-                            controller: _nameController,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: "Full Name",
-                              prefixIcon: Icon(
-                                LucideIcons.user,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Email Input
-                          TextField(
-                            controller: _emailController,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              labelText: "Email Address",
-                              prefixIcon: Icon(
-                                LucideIcons.mail,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // User Type Select
-                          DropdownButtonFormField<String>(
-                            initialValue: _userType,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: "User Category",
-                              prefixIcon: Icon(
-                                LucideIcons.graduationCap,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                            items: ['Student', 'Staff', 'Public'].map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(type),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _userType = val ?? 'Student';
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Student ID (Conditional)
-                          if (_userType != 'Public')
-                            TextField(
-                              controller: _upsiIdController,
-                              style: const TextStyle(
-                                color: AppTheme.textPrimary,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: "$_userType ID Number",
-                                prefixIcon: const Icon(
-                                  LucideIcons.creditCard,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 20),
-
-                          ElevatedButton(
-                            onPressed: _handleUserLogin,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                            child: const Text("Enter Booking Portal"),
-                          ),
-                        ] else ...[
-                          // ADMIN LOGIN FORM
                           Text(
-                            "Pool Operator Sign In",
+                            "Universiti Pendidikan Sultan Idris",
                             style: GoogleFonts.outfit(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentGold,
+                              letterSpacing: 1.5,
                             ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          if (_adminError != null) ...[
-                            Text(
-                              _adminError!,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-
-                          TextField(
-                            controller: _adminUsernameController,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: "Username",
-                              prefixIcon: Icon(
-                                LucideIcons.userCheck,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          TextField(
-                            controller: _adminPasswordController,
-                            obscureText: true,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(
-                              labelText: "Password",
-                              prefixIcon: Icon(
-                                LucideIcons.lock,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          ElevatedButton(
-                            onPressed: _handleAdminLogin,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: AppTheme.accentGold,
-                              foregroundColor: AppTheme.primaryNavy,
-                            ),
-                            child: const Text("Admin Sign In"),
                           ),
                         ],
-
-                        // Divider & Demo Quick Logins
-                        const SizedBox(height: 20),
-                        const Row(
-                          children: [
-                            Expanded(child: Divider(color: AppTheme.border)),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(
-                                "DEMO QUICK ACCESS",
-                                style: TextStyle(
-                                  color: AppTheme.textLight,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: AppTheme.border)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Quick Logins
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => _handleDemoLogin('student'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  textStyle: const TextStyle(fontSize: 12),
-                                ),
-                                child: const Text("Student"),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => _handleDemoLogin('public'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  textStyle: const TextStyle(fontSize: 12),
-                                ),
-                                child: const Text("Guest"),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => _handleDemoLogin('admin'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  textStyle: const TextStyle(fontSize: 12),
-                                ),
-                                child: const Text("Admin"),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ],
+                ),
+                // Right Side: Login
+                Expanded(
+                  flex: 4,
+                  child: rightSide,
+                ),
+              ],
+            );
+          }
+
+          // Fallback Mobile Layout (Vertical)
+          return Stack(
+            children: [
+              Container(
+                height: 400,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryNavy,
+                  image: DecorationImage(
+                    image: const AssetImage('assets/upsi_pool.jpg'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.6),
+                      BlendMode.darken,
+                    ),
+                  ),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "e-Renang",
+                        style: GoogleFonts.outfit(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Universiti Pendidikan Sultan Idris",
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          color: AppTheme.accentGold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Image.asset(
+                      'assets/upsi_logo.png',
+                      width: 80,
+                      height: 80,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: MediaQuery.of(context).size.height - 280,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: _buildLoginForm(context),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
