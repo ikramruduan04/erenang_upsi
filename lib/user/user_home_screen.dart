@@ -196,7 +196,7 @@ class UserHomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               image: const DecorationImage(
-                image: AssetImage('assets/upsi_pool.png'),
+                image: AssetImage('assets/upsi_pool.jpg'),
                 fit: BoxFit.cover,
               ),
             ),

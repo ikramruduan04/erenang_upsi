@@ -32,10 +32,7 @@ class CartItem {
 class UserOrderScreen extends StatefulWidget {
   final VoidCallback onBookingSuccess;
 
-  const UserOrderScreen({
-    super.key,
-    required this.onBookingSuccess,
-  });
+  const UserOrderScreen({super.key, required this.onBookingSuccess});
 
   @override
   State<UserOrderScreen> createState() => _UserOrderScreenState();
@@ -43,7 +40,7 @@ class UserOrderScreen extends StatefulWidget {
 
 class _UserOrderScreenState extends State<UserOrderScreen> {
   // Selection States
-  String _selectedPool = 'Kolam Utama';
+  final String _selectedPool = 'Kolam Utama';
   DateTime _selectedDate = DateTime.now();
   String _selectedSlot = '08:00 AM - 10:00 AM';
   int _quantity = 1;
@@ -65,11 +62,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   // Categories & Pricing Rules Definition
   final Map<String, List<Map<String, dynamic>>> _categories = {
     'Staf & Pelajar UPSI': [
-      {
-        'name': 'Pelajar UPSI',
-        'price': 0.0,
-        'note': 'Sila bawa kad pelajar',
-      },
+      {'name': 'Pelajar UPSI', 'price': 0.0, 'note': 'Sila bawa kad pelajar'},
       {
         'name': 'Staf/SUKSIS/SISPA/PALAPES - Suami/Isteri',
         'price': 3.0,
@@ -107,11 +100,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         'price': 5.0,
         'note': 'Sila bawa kad pelajar/Kad Pengenalan',
       },
-      {
-        'name': 'Dewasa',
-        'price': 10.0,
-        'note': 'Sila bawa kad pengenalan',
-      },
+      {'name': 'Dewasa', 'price': 10.0, 'note': 'Sila bawa kad pengenalan'},
       {
         'name': 'Warga Emas (60 tahun ke atas)',
         'price': 5.0,
@@ -132,11 +121,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         'price': 3.0,
         'note': 'Sila bawa kad OKU',
       },
-      {
-        'name': 'OKU - Dewasa',
-        'price': 5.0,
-        'note': 'Sila bawa kad OKU',
-      },
+      {'name': 'OKU - Dewasa', 'price': 5.0, 'note': 'Sila bawa kad OKU'},
     ],
   };
 
@@ -144,19 +129,20 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   final List<Map<String, dynamic>> _pools = [
     {
       'name': 'Kolam Utama',
-      'icon': LucideIcons.trophy,
+      'image': 'assets/upsi_pool.jpg',
       'depth': 'Standard Olimpik',
-      'desc': 'Standard Olimpik bersaiz 50 meter panjang dan 25 meter lebar dengan 10 lorong.',
+      'desc':
+          'Standard Olimpik bersaiz 50 meter panjang dan 25 meter lebar dengan 10 lorong.',
     },
     {
       'name': 'Kolam Renang Biasa',
-      'icon': LucideIcons.compass,
+      'image': 'assets/upsi_pool.jpg',
       'depth': '1.2 meter kedalaman',
       'desc': 'Kedalaman bersesuaian untuk latihan renang biasa dan santai.',
     },
     {
       'name': 'Kolam Kanak-Kanak',
-      'icon': LucideIcons.smile,
+      'image': 'assets/upsi_pool.jpg',
       'depth': '0.5 meter kedalaman',
       'desc': 'Kawasan cetek dan selamat untuk kanak-kanak bermain air.',
     },
@@ -239,7 +225,10 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
             Expanded(
               child: Text(
                 "Added $_quantity x $_selectedSubCategory to cart!",
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: Colors.white),
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -328,15 +317,22 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                                    color: AppTheme.primaryNavy.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(LucideIcons.ticket, color: AppTheme.primaryNavy, size: 20),
+                                  child: const Icon(
+                                    LucideIcons.ticket,
+                                    color: AppTheme.primaryNavy,
+                                    size: 20,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.subCategory,
@@ -386,7 +382,11 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 18),
+                                  icon: const Icon(
+                                    LucideIcons.trash2,
+                                    color: Colors.redAccent,
+                                    size: 18,
+                                  ),
                                   onPressed: () {
                                     setModalState(() {
                                       _cart.removeAt(idx);
@@ -415,29 +415,33 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.user, color: AppTheme.primaryNavy),
+                        const Icon(
+                          LucideIcons.user,
+                          color: AppTheme.primaryNavy,
+                        ),
                         const SizedBox(width: 12),
                         Column(
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             Text(
-                               "${currentUser['name']} (${currentUser['userType']})",
-                               style: GoogleFonts.outfit(
-                                                     fontSize: 13,
-                                                     fontWeight: FontWeight.bold,
-                                                     color: AppTheme.textPrimary,
-                                                   ),
-                             ),
-                             if (currentUser['upsiId'] != null && currentUser['upsiId']!.isNotEmpty)
-                               Text(
-                                 "ID: ${currentUser['upsiId']}",
-                                 style: GoogleFonts.outfit(
-                                   fontSize: 11,
-                                   color: AppTheme.textSecondary,
-                                 ),
-                               ),
-                           ],
-                         ),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${currentUser['name']} (${currentUser['userType']})",
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            if (currentUser['upsiId'] != null &&
+                                currentUser['upsiId']!.isNotEmpty)
+                              Text(
+                                "ID: ${currentUser['upsiId']}",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -448,8 +452,16 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Subtotal", style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
-                      Text("RM ${subtotal.toStringAsFixed(2)}", style: GoogleFonts.outfit(color: AppTheme.textPrimary)),
+                      Text(
+                        "Subtotal",
+                        style: GoogleFonts.outfit(
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        "RM ${subtotal.toStringAsFixed(2)}",
+                        style: GoogleFonts.outfit(color: AppTheme.textPrimary),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -489,7 +501,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         const SizedBox(width: 8),
                         Text(
                           "Confirm & Pay RM ${total.toStringAsFixed(2)}",
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -503,7 +517,6 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     );
   }
 
-
   Future<void> _confirmBooking(BuildContext modalContext) async {
     Navigator.pop(modalContext); // Close modal sheet
 
@@ -512,7 +525,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+        return const Center(
+          child: CircularProgressIndicator(color: AppTheme.accentGold),
+        );
       },
     );
 
@@ -523,7 +538,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
 
     final currentUser = DatabaseService.currentUser;
     final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
-    
+
     // We will loop through all cart items and create a booking for each
     for (int i = 0; i < _cart.length; i++) {
       final item = _cart[i];
@@ -543,7 +558,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         quantity: item.quantity,
         totalPrice: item.totalPrice,
         status: 'Approved', // Auto-approved for demo purposes
-        qrCode: 'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
+        qrCode:
+            'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
         notes: item.notes,
         createdAt: DateTime.now(),
       );
@@ -563,7 +579,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -594,7 +612,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context); // Close dialog
-                  widget.onBookingSuccess(); // Direct back and trigger tab change
+                  widget
+                      .onBookingSuccess(); // Direct back and trigger tab change
                 },
                 child: const Text("View My Tickets"),
               ),
@@ -608,7 +627,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   @override
   Widget build(BuildContext context) {
     final double selectedSubtotal = _getSelectedSubtotal();
-    final List<Map<String, dynamic>> availableSubCategories = _categories[_selectedGroup] ?? [];
+    final List<Map<String, dynamic>> availableSubCategories =
+        _categories[_selectedGroup] ?? [];
 
     return Column(
       children: [
@@ -622,11 +642,20 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             itemBuilder: (context, index) {
               final date = DateTime.now().add(Duration(days: index));
-              final isSelected = date.day == _selectedDate.day &&
+              final isSelected =
+                  date.day == _selectedDate.day &&
                   date.month == _selectedDate.month &&
                   date.year == _selectedDate.year;
 
-              final String weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
+              final String weekday = [
+                'Mon',
+                'Tue',
+                'Wed',
+                'Thu',
+                'Fri',
+                'Sat',
+                'Sun',
+              ][date.weekday - 1];
 
               return GestureDetector(
                 onTap: () {
@@ -634,7 +663,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     _selectedDate = date;
                     final slots = _getTimeSlotsForDate(date);
                     if (slots.isNotEmpty) {
-                      _selectedSlot = slots.contains(_selectedSlot) ? _selectedSlot : slots[0];
+                      _selectedSlot = slots.contains(_selectedSlot)
+                          ? _selectedSlot
+                          : slots[0];
                     } else {
                       _selectedSlot = '';
                     }
@@ -644,10 +675,14 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   width: 55,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
+                    color: isSelected
+                        ? AppTheme.primaryNavy
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? AppTheme.primaryNavy : AppTheme.border,
+                      color: isSelected
+                          ? AppTheme.primaryNavy
+                          : AppTheme.border,
                     ),
                   ),
                   child: Column(
@@ -657,7 +692,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         weekday,
                         style: GoogleFonts.outfit(
                           fontSize: 11,
-                          color: isSelected ? AppTheme.accentGold : AppTheme.textSecondary,
+                          color: isSelected
+                              ? AppTheme.accentGold
+                              : AppTheme.textSecondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -667,7 +704,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppTheme.textPrimary,
                         ),
                       ),
                     ],
@@ -700,9 +739,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 1. SELECT POOL AREA
+                // 1. POOL INFORMATION
                 Text(
-                  "1. Select Pool Area",
+                  "1. Swimming Pools Information",
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -713,75 +752,66 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 Column(
                   children: _pools.map((pool) {
                     final String name = pool['name'];
-                    final isSelected = name == _selectedPool;
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedPool = name;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.goldLight.withValues(alpha: 0.2) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected ? AppTheme.accentGold : AppTheme.border,
-                            width: isSelected ? 1.5 : 1.0,
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.border,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(
+                                image: AssetImage(pool['image']),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primaryNavy : AppTheme.background,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                pool['icon'],
-                                color: isSelected ? AppTheme.accentGold : AppTheme.textSecondary,
-                                size: 24,
-                              ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Depth: ${pool['depth']}",
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 11,
+                                    color: AppTheme.accentGold,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  pool['desc'],
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "Depth: ${pool['depth']}",
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      color: AppTheme.accentGold,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    pool['desc'],
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 12,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -798,7 +828,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Group selector toggle
                 Row(
                   children: [
@@ -807,13 +837,16 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         onTap: () {
                           setState(() {
                             _selectedGroup = 'Staf & Pelajar UPSI';
-                            _selectedSubCategory = _categories[_selectedGroup]![0]['name'];
+                            _selectedSubCategory =
+                                _categories[_selectedGroup]![0]['name'];
                           });
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: _selectedGroup == 'Staf & Pelajar UPSI' ? AppTheme.primaryNavy : Colors.white,
+                            color: _selectedGroup == 'Staf & Pelajar UPSI'
+                                ? AppTheme.primaryNavy
+                                : Colors.white,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(12),
                               bottomLeft: Radius.circular(12),
@@ -826,7 +859,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: _selectedGroup == 'Staf & Pelajar UPSI' ? Colors.white : AppTheme.textPrimary,
+                              color: _selectedGroup == 'Staf & Pelajar UPSI'
+                                  ? Colors.white
+                                  : AppTheme.textPrimary,
                             ),
                           ),
                         ),
@@ -837,13 +872,16 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         onTap: () {
                           setState(() {
                             _selectedGroup = 'Orang Awam';
-                            _selectedSubCategory = _categories[_selectedGroup]![0]['name'];
+                            _selectedSubCategory =
+                                _categories[_selectedGroup]![0]['name'];
                           });
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: _selectedGroup == 'Orang Awam' ? AppTheme.primaryNavy : Colors.white,
+                            color: _selectedGroup == 'Orang Awam'
+                                ? AppTheme.primaryNavy
+                                : Colors.white,
                             borderRadius: const BorderRadius.only(
                               topRight: Radius.circular(12),
                               bottomRight: Radius.circular(12),
@@ -856,7 +894,9 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: _selectedGroup == 'Orang Awam' ? Colors.white : AppTheme.textPrimary,
+                              color: _selectedGroup == 'Orang Awam'
+                                  ? Colors.white
+                                  : AppTheme.textPrimary,
                             ),
                           ),
                         ),
@@ -870,14 +910,22 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(_selectedGroup),
                   initialValue: _selectedSubCategory,
-                  style: GoogleFonts.outfit(color: AppTheme.textPrimary, fontSize: 13),
+                  style: GoogleFonts.outfit(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                  ),
                   decoration: const InputDecoration(
                     labelText: "Ticket Option",
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   items: availableSubCategories.map((item) {
                     final double price = (item['price'] as num).toDouble();
-                    final priceStr = price == 0.0 ? "Percuma" : "RM ${price.toStringAsFixed(2)}";
+                    final priceStr = price == 0.0
+                        ? "Percuma"
+                        : "RM ${price.toStringAsFixed(2)}";
                     return DropdownMenuItem<String>(
                       value: item['name'] as String,
                       child: Text("${item['name']} ($priceStr)"),
@@ -885,7 +933,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   }).toList(),
                   onChanged: (val) {
                     setState(() {
-                      _selectedSubCategory = val ?? availableSubCategories[0]['name'];
+                      _selectedSubCategory =
+                          val ?? availableSubCategories[0]['name'];
                     });
                   },
                 ),
@@ -898,11 +947,17 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.goldLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: AppTheme.accentGold.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.info, color: AppTheme.primaryNavy, size: 20),
+                      const Icon(
+                        LucideIcons.info,
+                        color: AppTheme.primaryNavy,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -952,11 +1007,17 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppTheme.error.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(LucideIcons.info, color: AppTheme.error, size: 20),
+                            const Icon(
+                              LucideIcons.info,
+                              color: AppTheme.error,
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -984,12 +1045,19 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primaryNavy : Colors.white,
+                              color: isSelected
+                                  ? AppTheme.primaryNavy
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isSelected ? AppTheme.primaryNavy : AppTheme.border,
+                                color: isSelected
+                                    ? AppTheme.primaryNavy
+                                    : AppTheme.border,
                               ),
                             ),
                             child: Text(
@@ -997,14 +1065,16 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppTheme.textPrimary,
                               ),
                             ),
                           ),
                         );
                       }).toList(),
                     );
-                  }
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -1023,7 +1093,10 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(LucideIcons.minusCircle, color: AppTheme.primaryNavy),
+                          icon: const Icon(
+                            LucideIcons.minusCircle,
+                            color: AppTheme.primaryNavy,
+                          ),
                           onPressed: () {
                             if (_quantity > 1) {
                               setState(() => _quantity--);
@@ -1039,7 +1112,10 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.plusCircle, color: AppTheme.primaryNavy),
+                          icon: const Icon(
+                            LucideIcons.plusCircle,
+                            color: AppTheme.primaryNavy,
+                          ),
                           onPressed: () {
                             if (_quantity < 10) {
                               setState(() => _quantity++);
@@ -1125,7 +1201,10 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1189,25 +1268,35 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   return ElevatedButton(
                     onPressed: isClosed ? null : _addToCart,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 36,
+                        vertical: 16,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      backgroundColor: isClosed ? Colors.grey : AppTheme.primaryNavy,
+                      backgroundColor: isClosed
+                          ? Colors.grey
+                          : AppTheme.primaryNavy,
                       foregroundColor: Colors.white,
                     ),
                     child: Row(
                       children: [
-                        Icon(isClosed ? LucideIcons.lock : LucideIcons.plusCircle, size: 18),
+                        Icon(
+                          isClosed ? LucideIcons.lock : LucideIcons.plusCircle,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           isClosed ? "Kolam Ditutup" : "Add to Cart",
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                   );
-                }
+                },
               ),
             ],
           ),
