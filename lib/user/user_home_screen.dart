@@ -57,12 +57,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     double progress = _sessionCount / nextTierSessions;
     Color tierColor = const Color(0xFFCD7F32); // Bronze
 
-    if (_sessionCount >= 7) {
-      tier = "Silver Swimmer";
-      tierColor = const Color(0xFFC0C0C0); // Silver
-    } else if (_sessionCount >= 15) {
+    if (_sessionCount >= 15) {
       tier = "Gold Swimmer";
       tierColor = AppTheme.accentGold;
+    } else if (_sessionCount >= 7) {
+      tier = "Silver Swimmer";
+      tierColor = const Color(0xFFC0C0C0); // Silver
     }
 
 

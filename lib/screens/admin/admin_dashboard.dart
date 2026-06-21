@@ -19,7 +19,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   bool _isLoading = false;
   List<Booking> _bookings = [];
   List<Announcement> _announcements = [];
-  final String _searchQuery = '';
+  String _searchQuery = '';
   String _statusFilter = 'All'; // All, Pending, Approved, Checked In, Cancelled
   int _selectedTab = 0; // 0: Dashboard, 1: Manage Inbox
 
@@ -191,7 +191,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             double getPricePerTicket() {
               final item = availableSubs.firstWhere(
                 (element) => element['name'] == subCategory,
-                orElse: () => {'price': 0.0},
+                orElse: () => <String, dynamic>{'price': 0.0},
               );
               return (item['price'] as num).toDouble();
             }
@@ -199,7 +199,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             String getNotes() {
               final item = availableSubs.firstWhere(
                 (element) => element['name'] == subCategory,
-                orElse: () => {'note': ''},
+                orElse: () => <String, dynamic>{'note': ''},
               );
               return item['note'] as String;
             }

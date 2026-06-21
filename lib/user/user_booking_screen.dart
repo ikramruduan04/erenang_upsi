@@ -20,7 +20,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
   int _currentIndex = 0;
   
   // Ref to refresh ticket tab when booking is successful
-  final GlobalKey<State> _ticketsKey = GlobalKey();
+  final GlobalKey<UserTicketsScreenState> _ticketsKey = GlobalKey<UserTicketsScreenState>();
 
   // Profile data
   Map<String, dynamic>? _profile;
@@ -63,6 +63,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
           setState(() {
             _currentIndex = 2; // Direct to Tickets tab
           });
+          _ticketsKey.currentState?.loadUserBookings();
         },
       ),
       UserTicketsScreen(key: _ticketsKey),
@@ -112,6 +113,9 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          if (index == 2) {
+            _ticketsKey.currentState?.loadUserBookings();
+          }
           if (index == 3 || index == 4) {
             _loadProfileAndAnnouncements(); // Refresh when switching to inbox/profile
           }

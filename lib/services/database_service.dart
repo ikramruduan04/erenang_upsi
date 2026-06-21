@@ -30,6 +30,23 @@ class DatabaseService {
         'role': 'user', // Default role
       },
     );
+
+    if (response.user != null) {
+      try {
+        await _client.from('profiles').insert({
+          'id': response.user!.id,
+          'name': name,
+          'email': email,
+          'user_type': userType,
+          'upsi_id': upsiId,
+          'role': 'user',
+        });
+      } catch (e) {
+        dev.log("Error inserting profile on sign up: $e");
+        // We can ignore if it already exists or if trigger handled it
+      }
+    }
+
     return response;
   }
 
@@ -59,6 +76,27 @@ class DatabaseService {
           .select()
           .eq('id', id)
           .maybeSingle();
+
+      // Fallback: If profile row is missing from profiles table, but the user is logged in,
+      // create it automatically using metadata or default values.
+      if (response == null && userId == null && currentUser != null) {
+        final meta = currentUser!.userMetadata ?? {};
+        final newProfile = {
+          'id': id,
+          'name': meta['name'] ?? 'User',
+          'email': currentUser!.email ?? '',
+          'user_type': meta['user_type'] ?? 'Student',
+          'upsi_id': meta['upsi_id'] ?? '',
+          'role': meta['role'] ?? 'user',
+        };
+        try {
+          await _client.from('profiles').insert(newProfile);
+          return newProfile;
+        } catch (insertErr) {
+          dev.log("Error auto-inserting profile: $insertErr");
+        }
+      }
+
       return response;
     } catch (e) {
       dev.log("Error fetching profile: $e");

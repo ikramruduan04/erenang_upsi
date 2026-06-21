@@ -9,10 +9,10 @@ class UserTicketsScreen extends StatefulWidget {
   const UserTicketsScreen({super.key});
 
   @override
-  State<UserTicketsScreen> createState() => _UserTicketsScreenState();
+  State<UserTicketsScreen> createState() => UserTicketsScreenState();
 }
 
-class _UserTicketsScreenState extends State<UserTicketsScreen>
+class UserTicketsScreenState extends State<UserTicketsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
@@ -23,7 +23,7 @@ class _UserTicketsScreenState extends State<UserTicketsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadUserBookings();
+    loadUserBookings();
   }
 
   @override
@@ -32,7 +32,7 @@ class _UserTicketsScreenState extends State<UserTicketsScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserBookings() async {
+  Future<void> loadUserBookings() async {
     setState(() => _isLoading = true);
     try {
       // getBookings() already filters by user_id for non-admin users
@@ -305,7 +305,7 @@ class _UserTicketsScreenState extends State<UserTicketsScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _loadUserBookings,
+      onRefresh: loadUserBookings,
       color: AppTheme.accentGold,
       child: ListView.builder(
         itemCount: bookings.length,

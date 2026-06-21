@@ -40,7 +40,7 @@ class UserOrderScreen extends StatefulWidget {
 
 class _UserOrderScreenState extends State<UserOrderScreen> {
   // Selection States
-  final String _selectedPool = 'Kolam Utama';
+  String _selectedPool = 'Kolam Utama';
   DateTime _selectedDate = DateTime.now();
   String _selectedSlot = '08:00 AM - 10:00 AM';
   int _quantity = 1;
@@ -187,7 +187,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     final list = _categories[_selectedGroup] ?? [];
     final sub = list.firstWhere(
       (item) => item['name'] == _selectedSubCategory,
-      orElse: () => {'price': 0.0},
+      orElse: () => <String, dynamic>{'price': 0.0},
     );
     return (sub['price'] as num).toDouble();
   }
@@ -196,7 +196,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     final list = _categories[_selectedGroup] ?? [];
     final sub = list.firstWhere(
       (item) => item['name'] == _selectedSubCategory,
-      orElse: () => {'note': ''},
+      orElse: () => <String, dynamic>{'note': ''},
     );
     return sub['note'] as String;
   }
@@ -437,17 +437,17 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "${currentUser['name']} (${currentUser['userType']})",
+                              "${currentUser['name']} (${currentUser['user_type']})",
                               style: GoogleFonts.outfit(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
                               ),
                             ),
-                            if (currentUser['upsiId'] != null &&
-                                currentUser['upsiId']!.isNotEmpty)
+                            if (currentUser['upsi_id'] != null &&
+                                currentUser['upsi_id']!.isNotEmpty)
                               Text(
-                                "ID: ${currentUser['upsiId']}",
+                                "ID: ${currentUser['upsi_id']}",
                                 style: GoogleFonts.outfit(
                                   fontSize: 11,
                                   color: AppTheme.textSecondary,
@@ -544,99 +544,130 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
       },
     );
 
-    // Simulate payment processing
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-    Navigator.pop(context); // Close loading dialog
+    try {
+      final currentUser = _profile ?? {};
+      final userId = DatabaseService.currentUser?.id;
+      final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final currentUser = _profile ?? {};
-    final userId = DatabaseService.currentUser?.id;
-    final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
+      // We will loop through all cart items and create a booking for each
+      for (int i = 0; i < _cart.length; i++) {
+        final item = _cart[i];
+        final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}-$i';
 
-    // We will loop through all cart items and create a booking for each
-    for (int i = 0; i < _cart.length; i++) {
-      final item = _cart[i];
-      final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}-$i';
+        final newBooking = Booking(
+          id: '', // Let Supabase generate UUID
+          userId: userId,
+          name: currentUser['name'] ?? 'Guest',
+          email: currentUser['email'] ?? DatabaseService.currentUser?.email ?? '',
+          phone: currentUser['phone'] ?? '',
+          upsiId: currentUser['upsi_id'] ?? '',
+          userType: item.userType,
+          subCategory: item.subCategory,
+          poolType: item.poolType,
+          bookingDate: item.bookingDate,
+          timeSlot: item.timeSlot,
+          quantity: item.quantity,
+          totalPrice: item.totalPrice,
+          status: 'Pending',
+          qrCode:
+              'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
+          notes: item.notes,
+          createdAt: DateTime.now(),
+        );
 
-      final newBooking = Booking(
-        id: '', // Let Supabase generate UUID
-        userId: userId,
-        name: currentUser['name'] ?? 'Guest',
-        email: currentUser['email'] ?? DatabaseService.currentUser?.email ?? '',
-        phone: currentUser['phone'] ?? '',
-        upsiId: currentUser['upsi_id'] ?? '',
-        userType: item.userType,
-        subCategory: item.subCategory,
-        poolType: item.poolType,
-        bookingDate: item.bookingDate,
-        timeSlot: item.timeSlot,
-        quantity: item.quantity,
-        totalPrice: item.totalPrice,
-        status: 'Pending',
-        qrCode:
-            'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
-        notes: item.notes,
-        createdAt: DateTime.now(),
+        // Write to Supabase
+        await DatabaseService.createBooking(newBooking);
+      }
+
+      // Close loading dialog
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      // Clear cart
+      setState(() {
+        _cart.clear();
+      });
+
+      // Show Success Dialog
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.checkCircle2,
+                  color: AppTheme.success,
+                  size: 60,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Bookings Confirmed!",
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Your swimming passes have been generated successfully. Show the QR tickets at the pool entrance.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    widget
+                        .onBookingSuccess(); // Direct back and trigger tab change
+                  },
+                  child: const Text("View My Tickets"),
+                ),
+              ],
+            ),
+          );
+        },
       );
+    } catch (e) {
+      // Close loading dialog
+      if (!mounted) return;
+      Navigator.pop(context);
 
-      // Write to Supabase
-      await DatabaseService.createBooking(newBooking);
-    }
-
-    // Clear cart
-    setState(() {
-      _cart.clear();
-    });
-
-    // Show Success Dialog
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+      // Show error dialog so user knows what happened
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
             children: [
-              const Icon(
-                LucideIcons.checkCircle2,
-                color: AppTheme.success,
-                size: 60,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Bookings Confirmed!",
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Your swimming passes have been generated successfully. Show the QR tickets at the pool entrance.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  widget
-                      .onBookingSuccess(); // Direct back and trigger tab change
-                },
-                child: const Text("View My Tickets"),
-              ),
+              const Icon(LucideIcons.alertCircle, color: Colors.red),
+              const SizedBox(width: 8),
+              Text("Booking Failed", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
             ],
           ),
-        );
-      },
-    );
+          content: Text(
+            "Could not complete booking. Please check your internet connection and try again.\n\nError: $e",
+            style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -747,7 +778,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     image: const DecorationImage(
-                      image: AssetImage('assets/upsi_pool.png'),
+                      image: AssetImage('assets/upsi_pool.jpg'),
                       fit: BoxFit.cover,
                     ),
                   ),

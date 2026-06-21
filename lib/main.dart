@@ -15,13 +15,14 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   // Initialize Supabase
-  final supabaseUrl = dotenv.env['SUPABASE_URL']?.trim() ?? 'https://wxzklwhlqnzucnhhyfij.supabase.co';
-  final supabaseKey = dotenv.env['SUPABASE_KEY']?.trim() ?? 'sb_publishable_XUnK5gdRc-kEmBEf50komQ_TciqPQt9';
+  final supabaseUrl =
+      dotenv.env['SUPABASE_URL']?.trim() ??
+      'https://wxzklwhlqnzucnhhyfij.supabase.co';
+  final supabaseKey =
+      dotenv.env['SUPABASE_KEY']?.trim() ??
+      'sb_publishable_XUnK5gdRc-kEmBEf50komQ_TciqPQt9';
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseKey,
-  );
+  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
 
   runApp(const ERenangApp());
 }
@@ -51,7 +52,9 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
-    _checkRoleAndNavigate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkRoleAndNavigate();
+    });
   }
 
   Future<void> _checkRoleAndNavigate() async {
