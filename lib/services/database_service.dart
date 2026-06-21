@@ -1,159 +1,190 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:developer' as dev;
 import '../models/booking.dart';
+import '../models/announcement.dart';
 
 class DatabaseService {
-  final _client = Supabase.instance.client;
-  
-  // Static in-memory database for mock fallback
-  static final List<Booking> _mockBookings = [
-    Booking(
-      id: 'mock-1',
-      name: 'Muhammad Ikram',
-      email: 'ikram@upsi.edu.my',
-      phone: '012-3456789',
-      upsiId: 'D20211099231',
-      userType: 'Staf & Pelajar UPSI',
-      subCategory: 'Pelajar UPSI',
-      poolType: 'Kolam Utama',
-      bookingDate: DateTime.now().add(const Duration(days: 1)),
-      timeSlot: '08:00 AM - 10:00 AM',
-      quantity: 2,
-      totalPrice: 0.00, // RM 0.00 (Percuma)
-      status: 'Approved',
-      qrCode: 'RENANG-MOCK-1',
-      notes: 'Sila bawa kad pelajar',
-      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-    ),
-    Booking(
-      id: 'mock-2',
-      name: 'Dr. Ahmad Fauzi',
-      email: 'fauzi@upsi.edu.my',
-      phone: '019-8765432',
-      upsiId: 'S88319',
-      userType: 'Staf & Pelajar UPSI',
-      subCategory: 'Staf Holding/Sambilan/RA',
-      poolType: 'Kolam Renang Biasa',
-      bookingDate: DateTime.now().add(const Duration(days: 2)),
-      timeSlot: '04:00 PM - 06:00 PM',
-      quantity: 1,
-      totalPrice: 3.00, // RM 3.00 * 1
-      status: 'Pending',
-      qrCode: 'RENANG-MOCK-2',
-      notes: 'Sila bawa kad pekerja/bukti perkhidmatan',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Booking(
-      id: 'mock-3',
-      name: 'Sarah Connor',
-      email: 'sarah@gmail.com',
-      phone: '011-2223334',
-      upsiId: '',
-      userType: 'Orang Awam',
-      subCategory: 'Dewasa',
-      poolType: 'Kolam Kanak-Kanak',
-      bookingDate: DateTime.now().subtract(const Duration(days: 1)),
-      timeSlot: '10:00 AM - 12:00 PM',
-      quantity: 3,
-      totalPrice: 30.00, // RM 10.00 * 3
-      status: 'Checked In',
-      qrCode: 'RENANG-MOCK-3',
-      notes: 'Sila bawa kad pengenalan',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-  ];
+  static final _client = Supabase.instance.client;
 
-  // Current session user details (Mock Auth)
-  static Map<String, String> currentUser = {
-    'name': 'Muhammad Ikram',
-    'email': 'ikram@student.upsi.edu.my',
-    'upsiId': 'D20211099231',
-    'userType': 'Staf & Pelajar UPSI',
-  };
+  // --- AUTHENTICATION ---
 
-  static bool isUseLocalFallback = false;
+  static Stream<AuthState> get authStateChanges =>
+      _client.auth.onAuthStateChange;
 
-  // READ
-  Future<List<Booking>> getBookings() async {
-    if (isUseLocalFallback) {
-      return List.from(_mockBookings);
-    }
-    
+  static User? get currentUser => _client.auth.currentUser;
+
+  static Future<AuthResponse> signUp({
+    required String email,
+    required String password,
+    required String name,
+    required String userType,
+    String upsiId = '',
+  }) async {
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'name': name,
+        'user_type': userType,
+        'upsi_id': upsiId,
+        'role': 'user', // Default role
+      },
+    );
+    return response;
+  }
+
+  static Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  static Future<void> signOut() async {
+    await _client.auth.signOut();
+  }
+
+  // --- PROFILES ---
+
+  static Future<Map<String, dynamic>?> getProfile([String? userId]) async {
     try {
+      final id = userId ?? currentUser?.id;
+      if (id == null) return null;
+
       final response = await _client
-          .from('bookings')
+          .from('profiles')
           .select()
-          .order('booking_date', ascending: false);
+          .eq('id', id)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      dev.log("Error fetching profile: $e");
+      return null;
+    }
+  }
+
+  static Future<void> updateProfile(Map<String, dynamic> data) async {
+    try {
+      final id = currentUser?.id;
+      if (id == null) return;
+      await _client.from('profiles').update(data).eq('id', id);
+    } catch (e) {
+      dev.log("Error updating profile: $e");
+      throw Exception('Failed to update profile');
+    }
+  }
+
+  static Future<bool> isAdmin() async {
+    final profile = await getProfile();
+    return profile?['role'] == 'admin';
+  }
+
+  // --- BOOKINGS ---
+
+  static Future<List<Booking>> getBookings() async {
+    try {
+      final admin = await isAdmin();
+
+      var query = _client.from('bookings').select();
+
+      if (!admin && currentUser != null) {
+        query = query.eq('user_id', currentUser!.id);
+      }
+
+      final response = await query.order('booking_date', ascending: false);
       return (response as List).map((data) => Booking.fromJson(data)).toList();
     } catch (e) {
-      dev.log("Supabase error. Falling back to local mock database: $e");
-      isUseLocalFallback = true;
-      return List.from(_mockBookings);
+      dev.log("Error fetching bookings: $e");
+      return [];
     }
   }
 
-  // CREATE
-  Future<void> createBooking(Booking booking) async {
-    if (isUseLocalFallback) {
-      _mockBookings.insert(0, booking);
-      return;
-    }
-
+  static Future<void> createBooking(Booking booking) async {
     try {
-      await _client.from('bookings').insert(booking.toJson());
+      final bookingData = booking.toJson();
+      if (currentUser != null) {
+        bookingData['user_id'] = currentUser!.id;
+      }
+      await _client.from('bookings').insert(bookingData);
     } catch (e) {
-      dev.log("Supabase error. Adding to local mock database: $e");
-      isUseLocalFallback = true;
-      _mockBookings.insert(0, booking);
+      dev.log("Error creating booking: $e");
+      throw Exception('Failed to create booking');
     }
   }
 
-  // UPDATE STATUS
-  Future<void> updateBookingStatus(String id, String newStatus) async {
-    if (isUseLocalFallback || id.startsWith('mock-')) {
-      final index = _mockBookings.indexWhere((b) => b.id == id);
-      if (index != -1) {
-        final old = _mockBookings[index];
-        _mockBookings[index] = old.copyWith(status: newStatus);
-      }
-      return;
-    }
-
+  static Future<void> updateBookingStatus(String id, String newStatus) async {
     try {
       await _client.from('bookings').update({'status': newStatus}).eq('id', id);
     } catch (e) {
-      dev.log("Supabase error. Updating local mock database: $e");
-      final index = _mockBookings.indexWhere((b) => b.id == id);
-      if (index != -1) {
-        final old = _mockBookings[index];
-        _mockBookings[index] = old.copyWith(status: newStatus);
-      }
+      dev.log("Error updating booking status: $e");
+      throw Exception('Failed to update status');
     }
   }
 
-  // DELETE
-  Future<void> deleteBooking(String id) async {
-    if (isUseLocalFallback || id.startsWith('mock-')) {
-      _mockBookings.removeWhere((b) => b.id == id);
-      return;
-    }
-
+  static Future<void> deleteBooking(String id) async {
     try {
       await _client.from('bookings').delete().eq('id', id);
     } catch (e) {
-      dev.log("Supabase error. Deleting from local mock database: $e");
-      _mockBookings.removeWhere((b) => b.id == id);
+      dev.log("Error deleting booking: $e");
+      throw Exception('Failed to delete booking');
     }
   }
 
-  // Set active mock user
-  static void setMockUser(String name, String email, String upsiId, String userType) {
-    currentUser = {
-      'name': name,
-      'email': email,
-      'upsiId': upsiId,
-      'userType': userType,
-    };
+  // --- ANNOUNCEMENTS ---
+
+  static Future<List<Announcement>> getAnnouncements() async {
+    try {
+      final response = await _client
+          .from('announcements')
+          .select()
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((data) => Announcement.fromJson(data))
+          .toList();
+    } catch (e) {
+      dev.log("Error fetching announcements: $e");
+      return [];
+    }
+  }
+
+  static Future<void> createAnnouncement(Announcement announcement) async {
+    try {
+      final data = announcement.toJson();
+      if (currentUser != null) {
+        data['created_by'] = currentUser!.id;
+      }
+      await _client.from('announcements').insert(data);
+    } catch (e) {
+      dev.log("Error creating announcement: $e");
+      throw Exception('Failed to create announcement');
+    }
+  }
+
+  static Future<void> updateAnnouncement(
+    String id,
+    String title,
+    String content,
+  ) async {
+    try {
+      await _client
+          .from('announcements')
+          .update({'title': title, 'content': content})
+          .eq('id', id);
+    } catch (e) {
+      dev.log("Error updating announcement: $e");
+      throw Exception('Failed to update announcement');
+    }
+  }
+
+  static Future<void> deleteAnnouncement(String id) async {
+    try {
+      await _client.from('announcements').delete().eq('id', id);
+    } catch (e) {
+      dev.log("Error deleting announcement: $e");
+      throw Exception('Failed to delete announcement');
+    }
   }
 }
-

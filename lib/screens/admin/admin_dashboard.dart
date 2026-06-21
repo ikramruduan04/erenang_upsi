@@ -6,6 +6,8 @@ import '../../models/booking.dart';
 import '../../services/database_service.dart';
 import '../auth_screen.dart';
 
+import '../../models/announcement.dart';
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -14,34 +16,53 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final DatabaseService _dbService = DatabaseService();
   bool _isLoading = false;
   List<Booking> _bookings = [];
-  String _searchQuery = '';
+  List<Announcement> _announcements = [];
+  final String _searchQuery = '';
   String _statusFilter = 'All'; // All, Pending, Approved, Checked In, Cancelled
+  int _selectedTab = 0; // 0: Dashboard, 1: Manage Inbox
 
   @override
   void initState() {
     super.initState();
     _fetchBookings();
+    _fetchAnnouncements();
+  }
+
+  Future<void> _fetchAnnouncements() async {
+    try {
+      final list = await DatabaseService.getAnnouncements();
+      if (mounted) {
+        setState(() {
+          _announcements = list;
+        });
+      }
+    } catch (e) {
+      // Ignored
+    }
   }
 
   Future<void> _fetchBookings() async {
     setState(() => _isLoading = true);
     try {
-      final list = await _dbService.getBookings();
-      setState(() {
-        _bookings = list;
-      });
+      final list = await DatabaseService.getBookings();
+      if (mounted) {
+        setState(() {
+          _bookings = list;
+        });
+      }
     } catch (e) {
       // Gracefully handled by service local fallback
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _updateStatus(String id, String status) async {
-    await _dbService.updateBookingStatus(id, status);
+    await DatabaseService.updateBookingStatus(id, status);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Booking status updated to '$status'")),
@@ -72,7 +93,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
 
     if (confirm == true) {
-      await _dbService.deleteBooking(id);
+      await DatabaseService.deleteBooking(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Booking deleted successfully.")),
@@ -426,7 +447,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       createdAt: DateTime.now(),
                     );
 
-                    await _dbService.createBooking(newBooking);
+                    await DatabaseService.createBooking(newBooking);
                     if (!context.mounted) return;
                     Navigator.pop(context);
                     _fetchBookings();
@@ -500,8 +521,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           _SidebarItem(
             icon: LucideIcons.layoutDashboard,
             label: "Dashboard",
-            isActive: true,
-            onTap: () {},
+            isActive: _selectedTab == 0,
+            onTap: () {
+              setState(() {
+                _selectedTab = 0;
+              });
+            },
           ),
           _SidebarItem(
             icon: LucideIcons.plusCircle,
@@ -513,11 +538,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
             label: "Sync/Refresh",
             onTap: _fetchBookings,
           ),
+          _SidebarItem(
+            icon: LucideIcons.messageSquare,
+            label: "Manage Inbox",
+            isActive: _selectedTab == 1,
+            onTap: () {
+              setState(() {
+                _selectedTab = 1;
+              });
+            },
+          ),
           const Spacer(),
           _SidebarItem(
             icon: LucideIcons.logOut,
             label: "Log Out",
-            onTap: () {
+            onTap: () async {
+              await DatabaseService.signOut();
+              if (!mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const AuthScreen()),
@@ -551,43 +588,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(width: 12),
               ],
               Expanded(
-                child: TextField(
-                  style: const TextStyle(color: AppTheme.textPrimary),
-                  onChanged: (val) {
-                    setState(() {
-                      _searchQuery = val;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    hintText: 'Search bookings by name, ID or reference...',
-                    prefixIcon: Icon(
-                      LucideIcons.search,
-                      color: AppTheme.textSecondary,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.background,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 0,
-                      horizontal: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: _showAddBookingDialog,
-                icon: const Icon(LucideIcons.plus, size: 16),
-                label: const Text("Walk-In"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentGold,
-                  foregroundColor: AppTheme.primaryNavy,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
+                child: Text(
+                  _selectedTab == 0 ? "Booking Overview" : "Manage Inbox",
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryNavy,
                   ),
                 ),
               ),
@@ -603,139 +609,143 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         const Divider(height: 1, color: AppTheme.border),
 
-        // Core Dashboard Body
+        // Content Area
         Expanded(
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: AppTheme.accentGold),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Stats Counters Row
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxis = constraints.maxWidth > 900
-                              ? 4
-                              : (constraints.maxWidth > 500 ? 2 : 1);
-                          return GridView(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxis,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 2.2,
-                                ),
-                            children: [
-                              _buildStatCard(
-                                "Total Bookings",
-                                "$totalCount",
-                                LucideIcons.calendar,
-                                Colors.blue,
-                              ),
-                              _buildStatCard(
-                                "Pending Requests",
-                                "$pendingCount",
-                                LucideIcons.clock,
-                                Colors.orange,
-                              ),
-                              _buildStatCard(
-                                "In Pool Now",
-                                "$activeCount",
-                                LucideIcons.droplets,
-                                Colors.teal,
-                              ),
-                              _buildStatCard(
-                                "Total Revenue",
-                                "RM ${revenue.toStringAsFixed(2)}",
-                                LucideIcons.coins,
-                                Colors.green,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Filter and Table Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Booking Manager (${filtered.length})",
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          // Dropdown filters
-                          DropdownButton<String>(
-                            value: _statusFilter,
-                            underline: const SizedBox(),
-                            style: GoogleFonts.outfit(
-                              color: AppTheme.primaryNavy,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            items:
-                                [
-                                  'All',
-                                  'Pending',
-                                  'Approved',
-                                  'Checked In',
-                                  'Cancelled',
-                                ].map((f) {
-                                  return DropdownMenuItem(
-                                    value: f,
-                                    child: Text(f),
-                                  );
-                                }).toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _statusFilter = val ?? 'All';
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Bookings list
-                      if (filtered.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.border),
-                          ),
-                          child: Center(
-                            child: Text(
-                              "No matching bookings found.",
-                              style: GoogleFonts.outfit(
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final booking = filtered[index];
-                            return _buildBookingItem(booking);
-                          },
+          child: _selectedTab == 0
+              ? (_isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.accentGold,
                         ),
-                    ],
-                  ),
-                ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Stats Counters Row
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                int crossAxis = constraints.maxWidth > 900
+                                    ? 4
+                                    : (constraints.maxWidth > 500 ? 2 : 1);
+                                return GridView(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: crossAxis,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                        childAspectRatio: 2.2,
+                                      ),
+                                  children: [
+                                    _buildStatCard(
+                                      "Total Bookings",
+                                      "$totalCount",
+                                      LucideIcons.calendar,
+                                      Colors.blue,
+                                    ),
+                                    _buildStatCard(
+                                      "Pending Requests",
+                                      "$pendingCount",
+                                      LucideIcons.clock,
+                                      Colors.orange,
+                                    ),
+                                    _buildStatCard(
+                                      "In Pool Now",
+                                      "$activeCount",
+                                      LucideIcons.droplets,
+                                      Colors.teal,
+                                    ),
+                                    _buildStatCard(
+                                      "Total Revenue",
+                                      "RM ${revenue.toStringAsFixed(2)}",
+                                      LucideIcons.coins,
+                                      Colors.green,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Filter and Table Header
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Booking Manager (${filtered.length})",
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                // Dropdown filters
+                                DropdownButton<String>(
+                                  value: _statusFilter,
+                                  underline: const SizedBox(),
+                                  style: GoogleFonts.outfit(
+                                    color: AppTheme.primaryNavy,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  items:
+                                      [
+                                        'All',
+                                        'Pending',
+                                        'Approved',
+                                        'Checked In',
+                                        'Cancelled',
+                                      ].map((f) {
+                                        return DropdownMenuItem(
+                                          value: f,
+                                          child: Text(f),
+                                        );
+                                      }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _statusFilter = val ?? 'All';
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Bookings list
+                            if (filtered.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(40),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppTheme.border),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "No matching bookings found.",
+                                    style: GoogleFonts.outfit(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) {
+                                  final booking = filtered[index];
+                                  return _buildBookingItem(booking);
+                                },
+                              ),
+                          ],
+                        ),
+                      ))
+              : _buildInboxManagementContent(),
         ),
       ],
     );
@@ -995,6 +1005,254 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
     );
+  }
+
+  Widget _buildInboxManagementContent() {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddAnnouncementDialog,
+        backgroundColor: AppTheme.accentGold,
+        foregroundColor: AppTheme.primaryNavy,
+        icon: const Icon(LucideIcons.plus),
+        label: const Text(
+          "New Announcement",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: _announcements.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    LucideIcons.inbox,
+                    size: 48,
+                    color: AppTheme.textLight,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No announcements yet.",
+                    style: GoogleFonts.outfit(color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(24),
+              itemCount: _announcements.length,
+              itemBuilder: (context, index) {
+                final announcement = _announcements[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: AppTheme.border),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                announcement.title,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryNavy,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                LucideIcons.edit,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                              onPressed: () =>
+                                  _showEditAnnouncementDialog(announcement),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                LucideIcons.trash2,
+                                color: AppTheme.error,
+                                size: 20,
+                              ),
+                              onPressed: () =>
+                                  _deleteAnnouncement(announcement.id),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          "Posted on ${announcement.createdAt.day}/${announcement.createdAt.month}/${announcement.createdAt.year}",
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          announcement.content,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  void _showAddAnnouncementDialog() {
+    final titleCtrl = TextEditingController();
+    final contentCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          "New Announcement",
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: const InputDecoration(labelText: "Title"),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: contentCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: "Content"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryNavy,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              if (titleCtrl.text.isEmpty || contentCtrl.text.isEmpty) return;
+              try {
+                final ann = Announcement(
+                  id: '',
+                  title: titleCtrl.text,
+                  content: contentCtrl.text,
+                  createdAt: DateTime.now(),
+                );
+                await DatabaseService.createAnnouncement(ann);
+                if (!mounted) return;
+                Navigator.pop(ctx);
+                _fetchAnnouncements();
+              } catch (e) {
+                // error
+              }
+            },
+            child: const Text("Post"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditAnnouncementDialog(Announcement announcement) {
+    final titleCtrl = TextEditingController(text: announcement.title);
+    final contentCtrl = TextEditingController(text: announcement.content);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          "Edit Announcement",
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: const InputDecoration(labelText: "Title"),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: contentCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: "Content"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryNavy,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              if (titleCtrl.text.isEmpty || contentCtrl.text.isEmpty) return;
+              try {
+                await DatabaseService.updateAnnouncement(
+                  announcement.id,
+                  titleCtrl.text,
+                  contentCtrl.text,
+                );
+                if (!mounted) return;
+                Navigator.pop(ctx);
+                _fetchAnnouncements();
+              } catch (e) {
+                // error
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAnnouncement(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Announcement?"),
+        content: const Text("This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await DatabaseService.deleteAnnouncement(id);
+      _fetchAnnouncements();
+    }
   }
 }
 

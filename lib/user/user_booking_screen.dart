@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../core/app_theme.dart';
 import '../services/database_service.dart';
+import '../models/announcement.dart';
 import '../screens/auth_screen.dart';
 import 'user_home_screen.dart';
 import 'user_order_screen.dart';
@@ -21,11 +22,33 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
   // Ref to refresh ticket tab when booking is successful
   final GlobalKey<State> _ticketsKey = GlobalKey();
 
+  // Profile data
+  Map<String, dynamic>? _profile;
+  List<Announcement> _announcements = [];
+  int _sessionCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileAndAnnouncements();
+  }
+
+  Future<void> _loadProfileAndAnnouncements() async {
+    final profile = await DatabaseService.getProfile();
+    final announcements = await DatabaseService.getAnnouncements();
+    final bookings = await DatabaseService.getBookings();
+    final completed = bookings.where((b) => b.status == 'Checked In').length;
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _announcements = announcements;
+        _sessionCount = completed;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = DatabaseService.currentUser;
-    final String userEmail = user['email'] ?? 'guest@upsi.edu.my';
-
     // List of screens
     final List<Widget> screens = [
       UserHomeScreen(
@@ -44,7 +67,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
       ),
       UserTicketsScreen(key: _ticketsKey),
       _buildInboxScreen(),
-      _buildProfileScreen(userEmail),
+      _buildProfileScreen(),
     ];
 
     return Scaffold(
@@ -89,6 +112,9 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          if (index == 3 || index == 4) {
+            _loadProfileAndAnnouncements(); // Refresh when switching to inbox/profile
+          }
           setState(() {
             _currentIndex = index;
           });
@@ -130,103 +156,113 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
     );
   }
 
-  // Beautiful simple inbox page
+  // --- INBOX SCREEN (Fetches from Supabase) ---
   Widget _buildInboxScreen() {
-    final announcements = [
-      {
-        'title': '🏊 Jadual Pembersihan Kolam Utama',
-        'time': '2 hours ago',
-        'content': 'Sila ambil maklum bahawa Kolam Utama (Olimpik) akan ditutup bagi pembersihan rutin pada pagi Khamis dari jam 8:00 AM hingga 12:00 PM. Kolam-kolam lain beroperasi seperti biasa.',
-        'isNew': true,
-      },
-      {
-        'title': '🎉 Swim Club Bronze Membership Active!',
-        'time': '1 day ago',
-        'content': 'Welcome to the Renang Club. Complete swimming sessions to earn points and upgrade your membership status to Silver Swimmer!',
-        'isNew': false,
-      },
-      {
-        'title': '📢 Pool Dress Code Reminder',
-        'time': '3 days ago',
-        'content': 'All swimmers must wear appropriate nylon/spandex swimwear. Cotton shirts and track pants are strictly prohibited inside the pools.',
-        'isNew': false,
-      },
-    ];
+    if (_announcements.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.inbox, size: 48, color: AppTheme.textLight),
+            const SizedBox(height: 16),
+            Text(
+              "No announcements yet",
+              style: GoogleFonts.outfit(fontSize: 16, color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
 
-    return ListView.builder(
-      itemCount: announcements.length,
-      padding: const EdgeInsets.all(20),
-      itemBuilder: (context, index) {
-        final item = announcements[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      item['title'] as String,
-                      style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (item['isNew'] as bool)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.accentGold,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+    return RefreshIndicator(
+      onRefresh: _loadProfileAndAnnouncements,
+      child: ListView.builder(
+        itemCount: _announcements.length,
+        padding: const EdgeInsets.all(20),
+        itemBuilder: (context, index) {
+          final item = _announcements[index];
+          final isNew = DateTime.now().difference(item.createdAt).inHours < 24;
+          final timeAgo = _formatTimeAgo(item.createdAt);
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
                       child: Text(
-                        "NEW",
+                        item.title,
                         style: GoogleFonts.outfit(
-                          fontSize: 9,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryNavy,
+                          color: AppTheme.textPrimary,
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item['time'] as String,
-                style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textLight),
-              ),
-              const Divider(height: 20, color: AppTheme.border),
-              Text(
-                item['content'] as String,
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                  height: 1.4,
+                    if (isNew)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentGold,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "NEW",
+                          style: GoogleFonts.outfit(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryNavy,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+                const SizedBox(height: 4),
+                Text(
+                  timeAgo,
+                  style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textLight),
+                ),
+                const Divider(height: 20, color: AppTheme.border),
+                Text(
+                  item.content,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  // Premium Profile Page
-  Widget _buildProfileScreen(String email) {
-    final user = DatabaseService.currentUser;
-    final String name = user['name'] ?? 'User';
-    final String type = user['userType'] ?? 'Student';
-    final String upsiId = user['upsiId'] ?? 'N/A';
+  String _formatTimeAgo(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hours ago";
+    if (diff.inDays < 7) return "${diff.inDays} days ago";
+    return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+  }
+
+  // --- PROFILE SCREEN (Editable, Supabase-backed) ---
+  Widget _buildProfileScreen() {
+    final String name = _profile?['name'] ?? 'User';
+    final String email = _profile?['email'] ?? DatabaseService.currentUser?.email ?? 'N/A';
+    final String type = _profile?['user_type'] ?? 'Student';
+    final String upsiId = _profile?['upsi_id'] ?? 'N/A';
+    final String phone = _profile?['phone'] ?? '';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -246,7 +282,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
                   radius: 36,
                   backgroundColor: AppTheme.primaryNavy,
                   child: Text(
-                    name.substring(0, 1).toUpperCase(),
+                    name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
                     style: GoogleFonts.outfit(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -274,6 +310,14 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
                           color: AppTheme.textSecondary,
                         ),
                       ),
+                      if (phone.isNotEmpty)
+                        Text(
+                          phone,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -297,6 +341,22 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+
+          // Edit Profile Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: Icon(LucideIcons.edit, size: 16),
+              label: const Text("Edit Profile"),
+              onPressed: () => _showEditProfileDialog(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryNavy,
+                side: const BorderSide(color: AppTheme.primaryNavy),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
 
           // User Stats Grid
@@ -305,7 +365,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
               Expanded(
                 child: _buildProfileStatCard(
                   icon: LucideIcons.checkSquare,
-                  value: type == 'Staff' ? "7 sessions" : "3 sessions",
+                  value: "$_sessionCount sessions",
                   label: "Swims Completed",
                 ),
               ),
@@ -313,7 +373,7 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
               Expanded(
                 child: _buildProfileStatCard(
                   icon: LucideIcons.coins,
-                  value: type == 'Staff' ? "140 pts" : "60 pts",
+                  value: "${_sessionCount * 20} pts",
                   label: "Renang Club Points",
                 ),
               ),
@@ -330,16 +390,6 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
             ),
             child: Column(
               children: [
-                _buildProfileOption(
-                  icon: LucideIcons.sliders,
-                  title: "Booking Preferences",
-                  subtitle: "Notifications, default ticket values",
-                ),
-                _buildProfileOption(
-                  icon: LucideIcons.shieldCheck,
-                  title: "Account Security",
-                  subtitle: "Change password, connected accounts",
-                ),
                 _buildProfileOption(
                   icon: LucideIcons.helpCircle,
                   title: "Help & Support Desk",
@@ -359,7 +409,9 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
           OutlinedButton.icon(
             icon: const Icon(LucideIcons.logOut, size: 18),
             label: const Text("Log Out Account"),
-            onPressed: () {
+            onPressed: () async {
+              await DatabaseService.signOut();
+              if (!mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const AuthScreen()),
@@ -374,6 +426,91 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // --- EDIT PROFILE DIALOG ---
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _profile?['name'] ?? '');
+    final phoneCtrl = TextEditingController(text: _profile?['phone'] ?? '');
+    final upsiIdCtrl = TextEditingController(text: _profile?['upsi_id'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Edit Profile", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Full Name",
+                    prefixIcon: Icon(LucideIcons.user),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Phone Number",
+                    prefixIcon: Icon(LucideIcons.phone),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: upsiIdCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "UPSI ID / Staff ID",
+                    prefixIcon: Icon(LucideIcons.creditCard),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await DatabaseService.updateProfile({
+                    'name': nameCtrl.text.trim(),
+                    'phone': phoneCtrl.text.trim(),
+                    'upsi_id': upsiIdCtrl.text.trim(),
+                  });
+                  if (!mounted) return;
+                  Navigator.pop(ctx);
+                  _loadProfileAndAnnouncements();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Profile updated!", style: GoogleFonts.outfit(color: Colors.white)),
+                      backgroundColor: AppTheme.success,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Failed to update: $e", style: GoogleFonts.outfit(color: Colors.white)),
+                      backgroundColor: AppTheme.error,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryNavy,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -452,4 +589,3 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
     );
   }
 }
-

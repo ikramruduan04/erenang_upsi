@@ -52,11 +52,24 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
   // Cart state
   final List<CartItem> _cart = [];
 
+  // Profile from Supabase
+  Map<String, dynamic>? _profile;
+
   @override
   void initState() {
     super.initState();
     final slots = _getTimeSlotsForDate(_selectedDate);
     _selectedSlot = slots.isNotEmpty ? slots[0] : '';
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await DatabaseService.getProfile();
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+      });
+    }
   }
 
   // Categories & Pricing Rules Definition
@@ -251,7 +264,7 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
           builder: (BuildContext context, StateSetter setModalState) {
             final double subtotal = _getCartSubtotal();
             final double total = _getCartTotalPrice();
-            final currentUser = DatabaseService.currentUser;
+            final currentUser = _profile ?? {};
 
             return Container(
               decoration: const BoxDecoration(
@@ -536,7 +549,8 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
     if (!mounted) return;
     Navigator.pop(context); // Close loading dialog
 
-    final currentUser = DatabaseService.currentUser;
+    final currentUser = _profile ?? {};
+    final userId = DatabaseService.currentUser?.id;
     final timeStamp = DateTime.now().millisecondsSinceEpoch.toString();
 
     // We will loop through all cart items and create a booking for each
@@ -545,11 +559,12 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
       final uniqueId = 'B-${timeStamp.substring(timeStamp.length - 6)}-$i';
 
       final newBooking = Booking(
-        id: uniqueId,
+        id: '', // Let Supabase generate UUID
+        userId: userId,
         name: currentUser['name'] ?? 'Guest',
-        email: currentUser['email'] ?? 'guest@upsi.edu.my',
-        phone: '01X-XXX XXXX',
-        upsiId: currentUser['upsiId'] ?? '',
+        email: currentUser['email'] ?? DatabaseService.currentUser?.email ?? '',
+        phone: currentUser['phone'] ?? '',
+        upsiId: currentUser['upsi_id'] ?? '',
         userType: item.userType,
         subCategory: item.subCategory,
         poolType: item.poolType,
@@ -557,15 +572,15 @@ class _UserOrderScreenState extends State<UserOrderScreen> {
         timeSlot: item.timeSlot,
         quantity: item.quantity,
         totalPrice: item.totalPrice,
-        status: 'Approved', // Auto-approved for demo purposes
+        status: 'Pending',
         qrCode:
             'UP-$uniqueId-${item.poolType.substring(0, 3).replaceAll(" ", "").toUpperCase()}',
         notes: item.notes,
         createdAt: DateTime.now(),
       );
 
-      // Write to database (will fall back to memory automatically)
-      await DatabaseService().createBooking(newBooking);
+      // Write to Supabase
+      await DatabaseService.createBooking(newBooking);
     }
 
     // Clear cart

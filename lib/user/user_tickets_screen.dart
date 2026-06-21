@@ -12,9 +12,10 @@ class UserTicketsScreen extends StatefulWidget {
   State<UserTicketsScreen> createState() => _UserTicketsScreenState();
 }
 
-class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTickerProviderStateMixin {
+class _UserTicketsScreenState extends State<UserTicketsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _dbService = DatabaseService();
+  
   bool _isLoading = false;
   List<Booking> _allBookings = [];
 
@@ -34,17 +35,13 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
   Future<void> _loadUserBookings() async {
     setState(() => _isLoading = true);
     try {
-      final list = await _dbService.getBookings();
-      final currentUser = DatabaseService.currentUser;
-      // Filter bookings for current logged in user
+      // getBookings() already filters by user_id for non-admin users
+      final list = await DatabaseService.getBookings();
       setState(() {
-        _allBookings = list.where((b) => 
-          b.name.toLowerCase() == (currentUser['name'] ?? '').toLowerCase() || 
-          b.email?.toLowerCase() == (currentUser['email'] ?? '').toLowerCase()
-        ).toList();
+        _allBookings = list;
       });
     } catch (e) {
-      // Handled internally in DB service fallback
+      // Handled internally
     } finally {
       setState(() => _isLoading = false);
     }
@@ -56,7 +53,10 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 40,
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -80,7 +80,11 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.droplets, color: AppTheme.accentGold, size: 20),
+                          const Icon(
+                            LucideIcons.droplets,
+                            color: AppTheme.accentGold,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             "e-Renang Entry Ticket",
@@ -93,13 +97,17 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
                 ),
-                
+
                 Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
@@ -140,16 +148,26 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                         "${booking.bookingDate.day}/${booking.bookingDate.month}/${booking.bookingDate.year}",
                       ),
                       _buildTicketDetailRow("Time Session", booking.timeSlot),
-                      _buildTicketDetailRow("Tickets / Slots", "${booking.quantity} Pax"),
-                      _buildTicketDetailRow("Price Paid", "RM ${booking.totalPrice.toStringAsFixed(2)}"),
-                      
+                      _buildTicketDetailRow(
+                        "Tickets / Slots",
+                        "${booking.quantity} Pax",
+                      ),
+                      _buildTicketDetailRow(
+                        "Price Paid",
+                        "RM ${booking.totalPrice.toStringAsFixed(2)}",
+                      ),
+
                       const Divider(height: 32, color: AppTheme.border),
-                      
+
                       // Instructions
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(LucideIcons.info, color: AppTheme.accentGold, size: 18),
+                          const Icon(
+                            LucideIcons.info,
+                            color: AppTheme.accentGold,
+                            size: 18,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -181,7 +199,10 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 12),
+            style: GoogleFonts.outfit(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
+            ),
           ),
           Text(
             value,
@@ -209,7 +230,7 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
           Positioned(top: 0, left: 0, child: _qrAnchor()),
           Positioned(top: 0, right: 0, child: _qrAnchor()),
           Positioned(bottom: 0, left: 0, child: _qrAnchor()),
-          
+
           // Random pixel dots simulation
           Center(
             child: Container(
@@ -226,7 +247,8 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                 itemCount: 49,
                 itemBuilder: (context, index) {
                   // Standard pseudo-random logic to simulate QR structure
-                  final isFilled = (index * 7 + 13) % 5 == 0 ||
+                  final isFilled =
+                      (index * 7 + 13) % 5 == 0 ||
                       (index % 3 == 0) ||
                       (index > 40 && index % 2 == 0);
                   return Container(
@@ -290,7 +312,7 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
         padding: const EdgeInsets.all(16),
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          
+
           Color statusBg;
           Color statusText;
           switch (booking.status) {
@@ -332,7 +354,20 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][booking.bookingDate.month - 1].toUpperCase(),
+                            [
+                              'Jan',
+                              'Feb',
+                              'Mar',
+                              'Apr',
+                              'May',
+                              'Jun',
+                              'Jul',
+                              'Aug',
+                              'Sep',
+                              'Oct',
+                              'Nov',
+                              'Dec',
+                            ][booking.bookingDate.month - 1].toUpperCase(),
                             style: GoogleFonts.outfit(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -377,7 +412,10 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: statusBg,
                                   borderRadius: BorderRadius.circular(6),
@@ -413,11 +451,15 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
                       color: AppTheme.border,
                       margin: const EdgeInsets.symmetric(horizontal: 10),
                     ),
-                    
+
                     const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(LucideIcons.qrCode, color: AppTheme.primaryNavy, size: 28),
+                        Icon(
+                          LucideIcons.qrCode,
+                          color: AppTheme.primaryNavy,
+                          size: 28,
+                        ),
                         SizedBox(height: 4),
                         Text(
                           "SCAN",
@@ -442,9 +484,13 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     // Filter active bookings (Pending, Approved)
-    final active = _allBookings.where((b) => b.status == 'Approved' || b.status == 'Pending').toList();
+    final active = _allBookings
+        .where((b) => b.status == 'Approved' || b.status == 'Pending')
+        .toList();
     // Filter past bookings (Checked In, Cancelled)
-    final history = _allBookings.where((b) => b.status == 'Checked In' || b.status == 'Cancelled').toList();
+    final history = _allBookings
+        .where((b) => b.status == 'Checked In' || b.status == 'Cancelled')
+        .toList();
 
     return Column(
       children: [
@@ -457,7 +503,10 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
             unselectedLabelColor: AppTheme.textLight,
             indicatorColor: AppTheme.primaryNavy,
             indicatorWeight: 3,
-            labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+            labelStyle: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
             tabs: const [
               Tab(text: "Active Passes"),
               Tab(text: "Booking History"),
@@ -469,7 +518,9 @@ class _UserTicketsScreenState extends State<UserTicketsScreen> with SingleTicker
         // Tab View
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppTheme.accentGold),
+                )
               : TabBarView(
                   controller: _tabController,
                   children: [

@@ -1,5 +1,6 @@
 class Booking {
   final String id;
+  final String? userId;
   final String name;
   final String? email;
   final String? phone;
@@ -18,6 +19,7 @@ class Booking {
 
   Booking({
     required this.id,
+    this.userId,
     required this.name,
     this.email,
     this.phone,
@@ -38,6 +40,7 @@ class Booking {
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'] ?? '',
+      userId: json['user_id'],
       name: json['name'] ?? '',
       email: json['email'],
       phone: json['phone'],
@@ -59,6 +62,7 @@ class Booking {
   Map<String, dynamic> toJson() {
     return {
       if (id.isNotEmpty) 'id': id,
+      if (userId != null) 'user_id': userId,
       'name': name,
       'email': email,
       'phone': phone,
@@ -78,6 +82,7 @@ class Booking {
 
   Booking copyWith({
     String? id,
+    String? userId,
     String? name,
     String? email,
     String? phone,
@@ -96,6 +101,7 @@ class Booking {
   }) {
     return Booking(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,

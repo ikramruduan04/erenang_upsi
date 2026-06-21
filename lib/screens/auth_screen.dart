@@ -15,100 +15,112 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isAdminTab = false;
+  bool _isLogin = true; // For User tab (Login vs Sign Up)
+  bool _isLoading = false;
 
-  // User Form Controllers
-  final _nameController = TextEditingController(text: 'Muhammad Ikram');
-  final _emailController = TextEditingController(
-    text: 'ikram@student.upsi.edu.my',
-  );
-  final _upsiIdController = TextEditingController(text: 'D20211099231');
+  // Form Controllers
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _upsiIdController = TextEditingController();
   String _userType = 'Student'; // Student, Staff, Public
 
-  // Admin Form Controllers
-  final _adminUsernameController = TextEditingController();
-  final _adminPasswordController = TextEditingController();
-  String? _adminError;
+  String? _errorMessage;
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
     _upsiIdController.dispose();
-    _adminUsernameController.dispose();
-    _adminPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleUserLogin() {
-    if (_nameController.text.trim().isEmpty ||
-        _emailController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your Name and Email.')),
-      );
-      return;
-    }
+  Future<void> _handleAuth() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    final String group = _userType == 'Public' ? 'Orang Awam' : 'Staf & Pelajar UPSI';
-
-    // Set user profile in DatabaseService
-    DatabaseService.setMockUser(
-      _nameController.text.trim(),
-      _emailController.text.trim(),
-      _userType == 'Public' ? '' : _upsiIdController.text.trim(),
-      group,
-    );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const UserBookingScreen()),
-    );
-  }
-
-  void _handleAdminLogin() {
-    final username = _adminUsernameController.text.trim();
-    final password = _adminPasswordController.text;
-
-    if (username == 'admin' && password == 'admin') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminDashboard()),
-      );
-    } else {
+    try {
+      if (_isAdminTab) {
+        // Admin Login
+        await DatabaseService.signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (!mounted) return;
+        final isAdmin = await DatabaseService.isAdmin();
+        if (isAdmin) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminDashboard()),
+          );
+        } else {
+          // Logged in as user but tried admin portal
+          await DatabaseService.signOut();
+          setState(() {
+            _errorMessage = "Access Denied. You are not an admin.";
+          });
+        }
+      } else {
+        // User Portal
+        if (_isLogin) {
+          await DatabaseService.signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+          if (!mounted) return;
+          final isAdmin = await DatabaseService.isAdmin();
+          if (isAdmin) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminDashboard()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const UserBookingScreen()),
+            );
+          }
+        } else {
+          // Sign Up
+          if (_nameController.text.trim().isEmpty ||
+              _emailController.text.trim().isEmpty ||
+              _passwordController.text.isEmpty) {
+            setState(() {
+              _errorMessage = "Please fill in all required fields.";
+              _isLoading = false;
+            });
+            return;
+          }
+          await DatabaseService.signUp(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            name: _nameController.text.trim(),
+            userType: _userType,
+            upsiId: _userType == 'Public' ? '' : _upsiIdController.text.trim(),
+          );
+          // Auto login after signup in Supabase, navigate to user screen
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const UserBookingScreen()),
+          );
+        }
+      }
+    } catch (e) {
       setState(() {
-        _adminError =
-            'Invalid credentials. (Hint: Use demo bypass or admin/admin)';
+        _errorMessage = e.toString().contains('Exception')
+            ? e.toString()
+            : "Authentication failed. Check your credentials.";
       });
-    }
-  }
-
-  void _handleDemoLogin(String type) {
-    if (type == 'student') {
-      DatabaseService.setMockUser(
-        'Muhammad Ikram',
-        'ikram@student.upsi.edu.my',
-        'D20211099231',
-        'Staf & Pelajar UPSI',
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const UserBookingScreen()),
-      );
-    } else if (type == 'public') {
-      DatabaseService.setMockUser(
-        'John Smith',
-        'john.smith@gmail.com',
-        '',
-        'Orang Awam',
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const UserBookingScreen()),
-      );
-    } else if (type == 'admin') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminDashboard()),
-      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -135,13 +147,18 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _isAdminTab = false),
+                  onTap: () => setState(() {
+                    _isAdminTab = false;
+                    _errorMessage = null;
+                  }),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: !_isAdminTab ? AppTheme.primaryNavy : Colors.transparent,
+                          color: !_isAdminTab
+                              ? AppTheme.primaryNavy
+                              : Colors.transparent,
                           width: 2.5,
                         ),
                       ),
@@ -152,7 +169,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: !_isAdminTab ? AppTheme.primaryNavy : AppTheme.textLight,
+                        color: !_isAdminTab
+                            ? AppTheme.primaryNavy
+                            : AppTheme.textLight,
                       ),
                     ),
                   ),
@@ -160,13 +179,19 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _isAdminTab = true),
+                  onTap: () => setState(() {
+                    _isAdminTab = true;
+                    _isLogin = true; // Admin is always login
+                    _errorMessage = null;
+                  }),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: _isAdminTab ? AppTheme.primaryNavy : Colors.transparent,
+                          color: _isAdminTab
+                              ? AppTheme.primaryNavy
+                              : Colors.transparent,
                           width: 2.5,
                         ),
                       ),
@@ -177,7 +202,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: _isAdminTab ? AppTheme.primaryNavy : AppTheme.textLight,
+                        color: _isAdminTab
+                            ? AppTheme.primaryNavy
+                            : AppTheme.textLight,
                       ),
                     ),
                   ),
@@ -187,41 +214,89 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: 24),
 
-          if (!_isAdminTab) ...[
-            Text(
-              "Join the Renang Club",
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
+          Text(
+            _isAdminTab
+                ? "Pool Operator Sign In"
+                : (_isLogin
+                      ? "Welcome Back to Renang Club"
+                      : "Join the Renang Club"),
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (_errorMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 13),
               ),
             ),
             const SizedBox(height: 16),
+          ],
+
+          if (!_isAdminTab && !_isLogin) ...[
+            // Register Only Fields
             TextField(
               controller: _nameController,
               style: const TextStyle(color: AppTheme.textPrimary),
               decoration: const InputDecoration(
                 labelText: "Full Name",
-                prefixIcon: Icon(LucideIcons.user, color: AppTheme.textSecondary),
+                prefixIcon: Icon(
+                  LucideIcons.user,
+                  color: AppTheme.textSecondary,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              style: const TextStyle(color: AppTheme.textPrimary),
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: "Email Address",
-                prefixIcon: Icon(LucideIcons.mail, color: AppTheme.textSecondary),
+          ],
+
+          // Email Input (Shared)
+          TextField(
+            controller: _emailController,
+            style: const TextStyle(color: AppTheme.textPrimary),
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: _isAdminTab ? "Admin Email" : "Email Address",
+              prefixIcon: const Icon(
+                LucideIcons.mail,
+                color: AppTheme.textSecondary,
               ),
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
+
+          // Password Input (Shared)
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            style: const TextStyle(color: AppTheme.textPrimary),
+            decoration: const InputDecoration(
+              labelText: "Password",
+              prefixIcon: Icon(LucideIcons.lock, color: AppTheme.textSecondary),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          if (!_isAdminTab && !_isLogin) ...[
+            // User Category
             DropdownButtonFormField<String>(
               initialValue: _userType,
               style: const TextStyle(color: AppTheme.textPrimary),
               decoration: const InputDecoration(
                 labelText: "User Category",
-                prefixIcon: Icon(LucideIcons.graduationCap, color: AppTheme.textSecondary),
+                prefixIcon: Icon(
+                  LucideIcons.graduationCap,
+                  color: AppTheme.textSecondary,
+                ),
               ),
               items: ['Student', 'Staff', 'Public'].map((type) {
                 return DropdownMenuItem(value: type, child: Text(type));
@@ -233,127 +308,70 @@ class _AuthScreenState extends State<AuthScreen> {
               },
             ),
             const SizedBox(height: 12),
+
             if (_userType != 'Public')
               TextField(
                 controller: _upsiIdController,
                 style: const TextStyle(color: AppTheme.textPrimary),
                 decoration: InputDecoration(
                   labelText: "$_userType ID Number",
-                  prefixIcon: const Icon(LucideIcons.creditCard, color: AppTheme.textSecondary),
+                  prefixIcon: const Icon(
+                    LucideIcons.creditCard,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _handleUserLogin,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text("Enter Booking Portal"),
-            ),
-          ] else ...[
-            Text(
-              "Pool Operator Sign In",
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_adminError != null) ...[
-              Text(
-                _adminError!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-            ],
-            TextField(
-              controller: _adminUsernameController,
-              style: const TextStyle(color: AppTheme.textPrimary),
-              decoration: const InputDecoration(
-                labelText: "Username",
-                prefixIcon: Icon(LucideIcons.userCheck, color: AppTheme.textSecondary),
-              ),
-            ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _adminPasswordController,
-              obscureText: true,
-              style: const TextStyle(color: AppTheme.textPrimary),
-              decoration: const InputDecoration(
-                labelText: "Password",
-                prefixIcon: Icon(LucideIcons.lock, color: AppTheme.textSecondary),
-              ),
+          ],
+
+          const SizedBox(height: 8),
+
+          ElevatedButton(
+            onPressed: _isLoading ? null : _handleAuth,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+              backgroundColor: _isAdminTab
+                  ? AppTheme.accentGold
+                  : AppTheme.primaryNavy,
+              foregroundColor: _isAdminTab
+                  ? AppTheme.primaryNavy
+                  : Colors.white,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _handleAdminLogin,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                backgroundColor: AppTheme.accentGold,
-                foregroundColor: AppTheme.primaryNavy,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    _isAdminTab
+                        ? "Admin Sign In"
+                        : (_isLogin ? "Sign In" : "Create Account"),
+                  ),
+          ),
+
+          if (!_isAdminTab) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLogin = !_isLogin;
+                    _errorMessage = null;
+                  });
+                },
+                child: Text(
+                  _isLogin
+                      ? "Don't have an account? Sign Up"
+                      : "Already have an account? Sign In",
+                  style: const TextStyle(
+                    color: AppTheme.primaryNavy,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              child: const Text("Admin Sign In"),
             ),
           ],
-          const SizedBox(height: 20),
-          const Row(
-            children: [
-              Expanded(child: Divider(color: AppTheme.border)),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  "DEMO QUICK ACCESS",
-                  style: TextStyle(
-                    color: AppTheme.textLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(color: AppTheme.border)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _handleDemoLogin('student'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    textStyle: const TextStyle(fontSize: 12),
-                  ),
-                  child: const Text("Student"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _handleDemoLogin('public'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    textStyle: const TextStyle(fontSize: 12),
-                  ),
-                  child: const Text("Guest"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _handleDemoLogin('admin'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    textStyle: const TextStyle(fontSize: 12),
-                  ),
-                  child: const Text("Admin"),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -383,7 +401,10 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 40,
+                    ),
                     child: _buildLoginForm(context),
                   ),
                 ),
@@ -438,10 +459,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 // Right Side: Login
-                Expanded(
-                  flex: 4,
-                  child: rightSide,
-                ),
+                Expanded(flex: 4, child: rightSide),
               ],
             );
           }

@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/app_theme.dart';
 import '../services/database_service.dart';
 
-class UserHomeScreen extends StatelessWidget {
+class UserHomeScreen extends StatefulWidget {
   final VoidCallback onBookNowPressed;
 
   const UserHomeScreen({
@@ -15,29 +15,56 @@ class UserHomeScreen extends StatelessWidget {
   });
 
   @override
+  State<UserHomeScreen> createState() => _UserHomeScreenState();
+}
+
+class _UserHomeScreenState extends State<UserHomeScreen> {
+  Map<String, dynamic>? _profile;
+  int _sessionCount = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final profile = await DatabaseService.getProfile();
+    final bookings = await DatabaseService.getBookings();
+    final completed = bookings.where((b) => b.status == 'Checked In').length;
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _sessionCount = completed;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = DatabaseService.currentUser;
-    final String name = user['name'] ?? 'User';
-    final String userType = user['userType'] ?? 'Student';
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final String name = _profile?['name'] ?? 'User';
+    final String userType = _profile?['user_type'] ?? 'Student';
     
     // Determine membership tier details
-    String tier = "Bronze Swimmer";
-    int sessions = 3;
     int nextTierSessions = 10;
-    double progress = sessions / nextTierSessions;
+    String tier = "Bronze Swimmer";
+    double progress = _sessionCount / nextTierSessions;
     Color tierColor = const Color(0xFFCD7F32); // Bronze
 
-    if (userType == 'Staff') {
+    if (_sessionCount >= 7) {
       tier = "Silver Swimmer";
-      sessions = 7;
-      progress = sessions / nextTierSessions;
       tierColor = const Color(0xFFC0C0C0); // Silver
-    } else if (userType == 'Public') {
-      tier = "Bronze Swimmer";
-      sessions = 1;
-      progress = sessions / nextTierSessions;
-      tierColor = const Color(0xFFCD7F32); // Bronze
+    } else if (_sessionCount >= 15) {
+      tier = "Gold Swimmer";
+      tierColor = AppTheme.accentGold;
     }
+
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -133,7 +160,7 @@ class UserHomeScreen extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      "$sessions / $nextTierSessions swims",
+                      "$_sessionCount / $nextTierSessions swims",
                       style: GoogleFonts.outfit(
                         fontSize: 13,
                         color: AppTheme.accentGold,
@@ -155,7 +182,7 @@ class UserHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Book ${nextTierSessions - sessions} more sessions to unlock premium benefits!",
+                  "Book ${nextTierSessions - _sessionCount} more sessions to unlock premium benefits!",
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.7),
@@ -163,7 +190,7 @@ class UserHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: onBookNowPressed,
+                  onPressed: widget.onBookNowPressed,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accentGold,
                     foregroundColor: AppTheme.primaryNavy,
