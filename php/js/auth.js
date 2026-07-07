@@ -37,6 +37,11 @@ try {
   console.warn("Error reading auth cache:", e);
 }
 
+// Expose to window for global access across scripts
+window.currentUser = currentUser;
+window.currentProfile = currentProfile;
+
+
 // 2. Synchronous Page Guards (Redirects instantly before rendering loading spinner)
 const currentPage = window.location.pathname.split('/').pop();
 const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
@@ -116,17 +121,21 @@ if (window.supabaseClient) {
     // If session status changed
     if (newUser) {
       currentUser = newUser;
+      window.currentUser = newUser;
       localStorage.setItem('upsi_cached_user', JSON.stringify(currentUser));
       
       // Fetch profile and check role
       const profile = await fetchProfile(currentUser.id, currentUser);
       if (profile) {
         currentProfile = profile;
+        window.currentProfile = profile;
         localStorage.setItem('upsi_cached_profile', JSON.stringify(currentProfile));
       }
     } else {
       currentUser = null;
+      window.currentUser = null;
       currentProfile = null;
+      window.currentProfile = null;
       localStorage.removeItem('upsi_cached_user');
       localStorage.removeItem('upsi_cached_profile');
       localStorage.removeItem('upsi_cached_session_count');
