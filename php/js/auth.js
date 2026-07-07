@@ -216,3 +216,6 @@ async function signOutUser() {
   currentProfile = null;
   window.location.href = 'login.php';
 }
+
+// Expose globally
+window.signOutUser = signOutUser;
