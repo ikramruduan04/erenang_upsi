@@ -338,8 +338,32 @@
       if (!user) return;
       localProfile = profile;
 
+      // Update UI basic details instantly
+      document.getElementById('display-avatar').textContent = (profile.name || 'U').charAt(0).toUpperCase();
+      document.getElementById('display-name').textContent = profile.name || 'Swimmer';
+      document.getElementById('display-badge').textContent = profile.user_type || 'Student';
+      document.getElementById('display-email').textContent = profile.email || user.email;
+      
+      if (profile.phone) {
+        document.getElementById('display-phone').textContent = profile.phone;
+        document.getElementById('display-phone-row').classList.remove('hidden');
+      } else {
+        document.getElementById('display-phone-row').classList.add('hidden');
+      }
+
+      if (profile.user_type !== 'Public' && profile.upsi_id) {
+        document.getElementById('display-upsi').textContent = "ID: " + profile.upsi_id;
+        document.getElementById('display-upsi-row').classList.remove('hidden');
+      } else {
+        document.getElementById('display-upsi-row').classList.add('hidden');
+      }
+
+      // Show profile card immediately to bypass spinner freeze
+      document.getElementById('page-loader').classList.add('hidden');
+      document.getElementById('profile-content').classList.remove('hidden');
+
       try {
-        // Fetch check-in sessions
+        // Fetch check-in sessions in background
         const { data, error } = await window.supabaseClient
           .from('bookings')
           .select('id')
@@ -351,38 +375,13 @@
         const sessionCount = data?.length || 0;
         const points = sessionCount * 20;
 
-        // Update UI details
-        document.getElementById('display-avatar').textContent = (profile.name || 'U').charAt(0).toUpperCase();
-        document.getElementById('display-name').textContent = profile.name || 'Swimmer';
-        document.getElementById('display-badge').textContent = profile.user_type || 'Student';
-        document.getElementById('display-email').textContent = profile.email || user.email;
-        
-        if (profile.phone) {
-          document.getElementById('display-phone').textContent = profile.phone;
-          document.getElementById('display-phone-row').classList.remove('hidden');
-        } else {
-          document.getElementById('display-phone-row').classList.add('hidden');
-        }
-
-        if (profile.user_type !== 'Public' && profile.upsi_id) {
-          document.getElementById('display-upsi').textContent = "ID: " + profile.upsi_id;
-          document.getElementById('display-upsi-row').classList.remove('hidden');
-        } else {
-          document.getElementById('display-upsi-row').classList.add('hidden');
-        }
-
         document.getElementById('stat-sessions').textContent = sessionCount;
         document.getElementById('stat-points').textContent = points;
-
-        // Display dashboard content and hide loader
-        document.getElementById('page-loader').classList.add('hidden');
-        document.getElementById('profile-content').classList.remove('hidden');
         
         if (window.updateIcons) window.updateIcons();
 
       } catch (err) {
         console.error('Error fetching profile dashboard details:', err);
-        document.getElementById('page-loader').innerHTML = `<p class="text-red-500 text-sm font-bold">Failed to load profile. Please refresh.</p>`;
       }
     });
   </script>

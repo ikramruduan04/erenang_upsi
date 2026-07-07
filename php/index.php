@@ -280,17 +280,19 @@
     onAuthResolve(async (user, profile) => {
       if (!user) return; // auth.js will handle redirect to login
 
-      // 1) Render immediately using cached session count if available
+      // 1) Render immediately using cached session count or default to 0
       let cachedCount = 0;
       try {
         const localCount = localStorage.getItem('upsi_cached_session_count');
         if (localCount !== null) {
           cachedCount = parseInt(localCount);
-          renderHomeUI(cachedCount, profile, user);
         }
       } catch (e) {
         console.warn("Error loading cached count:", e);
       }
+
+      // Render home page immediately with cached/default data
+      renderHomeUI(cachedCount, profile, user);
 
       try {
         // 2) Fetch session completions from Supabase in the background
@@ -309,10 +311,6 @@
 
       } catch (err) {
         console.error('Error loading home data:', err);
-        // If we didn't render anything from cache yet, show error message
-        if (document.getElementById('home-content').classList.contains('hidden')) {
-          document.getElementById('page-loader').innerHTML = `<p class="text-red-500 text-sm font-bold">Failed to load account data. Please refresh.</p>`;
-        }
       }
     });
   </script>

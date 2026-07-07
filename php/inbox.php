@@ -170,6 +170,10 @@
       const errorMessage = document.getElementById('error-message');
 
       errorContainer.classList.add('hidden');
+      
+      // Hide page-level loader and show inbox container immediately
+      loader.classList.add('hidden');
+      inboxContent.classList.remove('hidden');
 
       // 1) Load from local cache immediately
       let hasCachedData = false;
@@ -184,10 +188,13 @@
         console.warn("Error loading cached announcements:", e);
       }
 
-      // Show loader if no cache exists
+      // If no cache exists, show an inline loading placeholder inside the list
       if (!hasCachedData) {
-        loader.classList.remove('hidden');
-        inboxContent.classList.add('hidden');
+        document.getElementById('announcements-list').innerHTML = `
+          <div class="text-center py-12 text-[#64748B] font-semibold text-sm">
+            Fetching announcements from Supabase...
+          </div>
+        `;
       }
       
       try {
@@ -207,8 +214,6 @@
         console.error('Error fetching announcements:', err);
         errorMessage.textContent = 'Failed to fetch announcements. Please click refresh.';
         errorContainer.classList.remove('hidden');
-        loader.classList.add('hidden');
-        inboxContent.classList.remove('hidden');
       }
     }
 
