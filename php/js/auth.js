@@ -102,15 +102,11 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
   // Page Guards
   const currentPage = window.location.pathname.split('/').pop();
   
-  // Public pages
   const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
-  
+
   if (!currentUser && !isAuthPage) {
     // If not logged in and not on login/register, redirect to login page immediately
     window.location.href = 'login.php';
-  } else if (currentUser && isAuthPage) {
-    // If logged in and on login/register, redirect to home page
-    window.location.href = 'index.php';
   }
 
   // Admin page guard

@@ -254,6 +254,18 @@
         btnSubmit.innerHTML = originalContent;
       }
     });
+    // Auto-redirect if already logged in when opening login.php
+    onAuthResolve((user, profile) => {
+      const btnSubmit = document.getElementById('btn-submit');
+      // If user session and profile exist, and we're not in the middle of logging in
+      if (user && profile && !btnSubmit.disabled) {
+        if (profile.role === 'admin') {
+          window.location.href = 'admin.php';
+        } else {
+          window.location.href = 'book-slot.php';
+        }
+      }
+    });
   </script>
 </body>
 </html>

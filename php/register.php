@@ -265,6 +265,14 @@
       }
     });
 
+    // Auto-redirect if already logged in when opening register.php
+    onAuthResolve((user, profile) => {
+      const btnSubmit = document.getElementById('btn-submit');
+      if (user && profile && !btnSubmit.disabled) {
+        window.location.href = 'book-slot.php';
+      }
+    });
+
     // Run once at start
     toggleUpsiIdField();
   </script>
