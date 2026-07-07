@@ -197,23 +197,24 @@ async function signUp(email, password, name, userType, upsiId = '') {
   return data;
 }
 
-async function signOutUser() {
+function signOutUser() {
   localStorage.removeItem('upsi_cached_user');
   localStorage.removeItem('upsi_cached_profile');
   localStorage.removeItem('upsi_cached_session_count');
   localStorage.removeItem('upsi_cached_bookings');
   localStorage.removeItem('upsi_cached_announcements');
   
-  if (window.supabaseClient) {
-    try {
-      await window.supabaseClient.auth.signOut();
-    } catch (e) {
-      console.warn("SignOut error:", e);
-    }
-  }
-  
   currentUser = null;
   currentProfile = null;
+  window.currentUser = null;
+  window.currentProfile = null;
+  
+  if (window.supabaseClient) {
+    window.supabaseClient.auth.signOut().catch(e => {
+      console.warn("SignOut background error:", e);
+    });
+  }
+  
   window.location.href = 'login.php';
 }
 
