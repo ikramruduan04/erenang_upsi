@@ -6,11 +6,22 @@
 const supabaseUrl = 'https://wxzklwhlqnzucnhhyfij.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4emtsd2hscW56dWNuaGh5ZmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjE4NDEsImV4cCI6MjA5NjU5Nzg0MX0.BUlM7Y_Fpq4_xCOo3mcMTtaOONE_C2rF2uHw-gmFGRc';
 
-// Initialize Supabase Client
-if (window.supabase) {
-  window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-} else {
-  console.error("Supabase CDN failed to load.");
+// Initialize Supabase Client safely
+try {
+  let clientLib = null;
+  if (typeof window.supabase !== 'undefined') {
+    clientLib = window.supabase;
+  } else if (typeof supabase !== 'undefined') {
+    clientLib = supabase;
+  }
+
+  if (clientLib) {
+    window.supabaseClient = clientLib.createClient(supabaseUrl, supabaseAnonKey);
+  } else {
+    console.error("Supabase library not found in global scope.");
+  }
+} catch (e) {
+  console.error("Error creating Supabase client:", e);
 }
 
 // Global session and profile variables loaded from localStorage cache for instant startup
@@ -77,45 +88,54 @@ async function fetchProfile(userId, userObj) {
 }
 
 // Monitor Authentication State
-window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-  currentUser = session?.user ?? null;
-  
-  if (currentUser) {
-    // Save user auth details to cache
-    localStorage.setItem('upsi_cached_user', JSON.stringify(currentUser));
+if (window.supabaseClient) {
+  window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    currentUser = session?.user ?? null;
     
-    // Fetch profile and update cache
-    currentProfile = await fetchProfile(currentUser.id, currentUser);
-    if (currentProfile) {
-      localStorage.setItem('upsi_cached_profile', JSON.stringify(currentProfile));
+    if (currentUser) {
+      // Save user auth details to cache
+      localStorage.setItem('upsi_cached_user', JSON.stringify(currentUser));
+      
+      // Fetch profile and update cache
+      currentProfile = await fetchProfile(currentUser.id, currentUser);
+      if (currentProfile) {
+        localStorage.setItem('upsi_cached_profile', JSON.stringify(currentProfile));
+      }
+    } else {
+      currentProfile = null;
+      localStorage.removeItem('upsi_cached_user');
+      localStorage.removeItem('upsi_cached_profile');
+      localStorage.removeItem('upsi_cached_session_count');
     }
-  } else {
-    currentProfile = null;
-    localStorage.removeItem('upsi_cached_user');
-    localStorage.removeItem('upsi_cached_profile');
-    localStorage.removeItem('upsi_cached_session_count');
-  }
 
-  // Run all registered callbacks with fresh data
-  authCallbacks.forEach(cb => cb(currentUser, currentProfile));
+    // Run all registered callbacks with fresh data
+    authCallbacks.forEach(cb => cb(currentUser, currentProfile));
 
-  // Page Guards
+    // Page Guards
+    const currentPage = window.location.pathname.split('/').pop();
+    
+    const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
+
+    if (!currentUser && !isAuthPage) {
+      // If not logged in and not on login/register, redirect to login page immediately
+      window.location.href = 'login.php';
+    }
+
+    // Admin page guard
+    if (currentPage === 'admin.php') {
+      if (!currentProfile || currentProfile.role !== 'admin') {
+        window.location.href = 'index.php';
+      }
+    }
+  });
+} else {
+  // Safe fallback: If Supabase client fails to load/initialize, still protect pages
   const currentPage = window.location.pathname.split('/').pop();
-  
   const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
-
-  if (!currentUser && !isAuthPage) {
-    // If not logged in and not on login/register, redirect to login page immediately
+  if (!isAuthPage) {
     window.location.href = 'login.php';
   }
-
-  // Admin page guard
-  if (currentPage === 'admin.php') {
-    if (!currentProfile || currentProfile.role !== 'admin') {
-      window.location.href = 'index.php';
-    }
-  }
-});
+}
 
 // Auth functions
 async function signIn(email, password) {
