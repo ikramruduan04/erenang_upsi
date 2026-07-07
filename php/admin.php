@@ -12,17 +12,6 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- Lucide Icons Local -->
   <script src="js/lucide.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            outfit: ['Outfit', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
 </head>
 <body class="min-h-screen bg-[#F4F6F9] flex font-outfit text-[#1E293B]">
 

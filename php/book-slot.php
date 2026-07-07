@@ -12,17 +12,6 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- Lucide Icons Local -->
   <script src="js/lucide.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            outfit: ['Outfit', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
   <style>
     /* Scrollbar hidden for date strip */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
