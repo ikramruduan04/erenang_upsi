@@ -1,12 +1,12 @@
 /**
  * auth.js
- * Central Supabase configuration and authentication helpers for e-Renang UPSI PHP.
+ * Synchronous page guards, localStorage caching, and Supabase integration.
  */
 
 const supabaseUrl = 'https://wxzklwhlqnzucnhhyfij.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4emtsd2hscW56dWNuaGh5ZmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjE4NDEsImV4cCI6MjA5NjU5Nzg0MX0.BUlM7Y_Fpq4_xCOo3mcMTtaOONE_C2rF2uHw-gmFGRc';
 
-// Initialize Supabase Client safely
+// Initialize Supabase Client
 try {
   let clientLib = null;
   if (typeof window.supabase !== 'undefined') {
@@ -24,7 +24,7 @@ try {
   console.error("Error creating Supabase client:", e);
 }
 
-// Global session and profile variables loaded from localStorage cache for instant startup
+// 1. Load Session & Profile Synchronously from Cache
 let currentUser = null;
 let currentProfile = null;
 
@@ -37,18 +37,39 @@ try {
   console.warn("Error reading auth cache:", e);
 }
 
-let authCallbacks = [];
+// 2. Synchronous Page Guards (Redirects instantly before rendering loading spinner)
+const currentPage = window.location.pathname.split('/').pop();
+const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
 
-// Add a callback to be notified when auth status resolves
+if (!currentUser && !isAuthPage) {
+  // If not logged in and not on login/register, redirect to login page immediately
+  window.location.href = 'login.php';
+} else if (currentUser && isAuthPage) {
+  // If already logged in and on login/register, bypass form and redirect to landing page
+  if (currentProfile && currentProfile.role === 'admin') {
+    window.location.href = 'admin.php';
+  } else {
+    window.location.href = 'book-slot.php';
+  }
+}
+
+// Admin Page Guard (Direct URL block)
+if (currentPage === 'admin.php') {
+  if (!currentProfile || currentProfile.role !== 'admin') {
+    window.location.href = 'index.php';
+  }
+}
+
+// 3. Callback Registration for Pages
+let authCallbacks = [];
 function onAuthResolve(callback) {
-  // If we already have cached or active session details, trigger the callback immediately
   if (currentUser !== null || currentProfile !== null) {
     callback(currentUser, currentProfile);
   }
   authCallbacks.push(callback);
 }
 
-// Fetch Profile from Supabase (mirrors React/Flutter profile fetching)
+// Fetch Profile helper
 async function fetchProfile(userId, userObj) {
   try {
     const { data, error } = await window.supabaseClient
@@ -87,57 +108,43 @@ async function fetchProfile(userId, userObj) {
   }
 }
 
-// Monitor Authentication State
+// 4. Background Auth State Sync
 if (window.supabaseClient) {
   window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    currentUser = session?.user ?? null;
+    const newUser = session?.user ?? null;
     
-    if (currentUser) {
-      // Save user auth details to cache
+    // If session status changed
+    if (newUser) {
+      currentUser = newUser;
       localStorage.setItem('upsi_cached_user', JSON.stringify(currentUser));
       
-      // Fetch profile and update cache
-      currentProfile = await fetchProfile(currentUser.id, currentUser);
-      if (currentProfile) {
+      // Fetch profile and check role
+      const profile = await fetchProfile(currentUser.id, currentUser);
+      if (profile) {
+        currentProfile = profile;
         localStorage.setItem('upsi_cached_profile', JSON.stringify(currentProfile));
       }
     } else {
+      currentUser = null;
       currentProfile = null;
       localStorage.removeItem('upsi_cached_user');
       localStorage.removeItem('upsi_cached_profile');
       localStorage.removeItem('upsi_cached_session_count');
+      localStorage.removeItem('upsi_cached_bookings');
+      localStorage.removeItem('upsi_cached_announcements');
     }
 
-    // Run all registered callbacks with fresh data
+    // Run all registered callbacks
     authCallbacks.forEach(cb => cb(currentUser, currentProfile));
 
-    // Page Guards
-    const currentPage = window.location.pathname.split('/').pop();
-    
-    const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
-
+    // Handle session expiry redirects in background
     if (!currentUser && !isAuthPage) {
-      // If not logged in and not on login/register, redirect to login page immediately
       window.location.href = 'login.php';
     }
-
-    // Admin page guard
-    if (currentPage === 'admin.php') {
-      if (!currentProfile || currentProfile.role !== 'admin') {
-        window.location.href = 'index.php';
-      }
-    }
   });
-} else {
-  // Safe fallback: If Supabase client fails to load/initialize, still protect pages
-  const currentPage = window.location.pathname.split('/').pop();
-  const isAuthPage = currentPage === 'login.php' || currentPage === 'register.php';
-  if (!isAuthPage) {
-    window.location.href = 'login.php';
-  }
 }
 
-// Auth functions
+// Auth actions
 async function signIn(email, password) {
   const { data, error } = await window.supabaseClient.auth.signInWithPassword({
     email,
@@ -182,8 +189,20 @@ async function signUp(email, password, name, userType, upsiId = '') {
 }
 
 async function signOutUser() {
-  const { error } = await window.supabaseClient.auth.signOut();
-  if (error) throw error;
+  localStorage.removeItem('upsi_cached_user');
+  localStorage.removeItem('upsi_cached_profile');
+  localStorage.removeItem('upsi_cached_session_count');
+  localStorage.removeItem('upsi_cached_bookings');
+  localStorage.removeItem('upsi_cached_announcements');
+  
+  if (window.supabaseClient) {
+    try {
+      await window.supabaseClient.auth.signOut();
+    } catch (e) {
+      console.warn("SignOut error:", e);
+    }
+  }
+  
   currentUser = null;
   currentProfile = null;
   window.location.href = 'login.php';
