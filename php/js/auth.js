@@ -13,13 +13,24 @@ if (window.supabase) {
   console.error("Supabase CDN failed to load.");
 }
 
-// Global session and profile variables
+// Global session and profile variables loaded from localStorage cache for instant startup
 let currentUser = null;
 let currentProfile = null;
+
+try {
+  const cachedUserObj = localStorage.getItem('upsi_cached_user');
+  const cachedProfileObj = localStorage.getItem('upsi_cached_profile');
+  if (cachedUserObj) currentUser = JSON.parse(cachedUserObj);
+  if (cachedProfileObj) currentProfile = JSON.parse(cachedProfileObj);
+} catch (e) {
+  console.warn("Error reading auth cache:", e);
+}
+
 let authCallbacks = [];
 
 // Add a callback to be notified when auth status resolves
 function onAuthResolve(callback) {
+  // If we already have cached or active session details, trigger the callback immediately
   if (currentUser !== null || currentProfile !== null) {
     callback(currentUser, currentProfile);
   }
@@ -70,12 +81,22 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
   currentUser = session?.user ?? null;
   
   if (currentUser) {
+    // Save user auth details to cache
+    localStorage.setItem('upsi_cached_user', JSON.stringify(currentUser));
+    
+    // Fetch profile and update cache
     currentProfile = await fetchProfile(currentUser.id, currentUser);
+    if (currentProfile) {
+      localStorage.setItem('upsi_cached_profile', JSON.stringify(currentProfile));
+    }
   } else {
     currentProfile = null;
+    localStorage.removeItem('upsi_cached_user');
+    localStorage.removeItem('upsi_cached_profile');
+    localStorage.removeItem('upsi_cached_session_count');
   }
 
-  // Run all registered callbacks
+  // Run all registered callbacks with fresh data
   authCallbacks.forEach(cb => cb(currentUser, currentProfile));
 
   // Page Guards

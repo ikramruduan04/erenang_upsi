@@ -105,16 +105,105 @@
       return diffHours < 24;
     }
 
-    async function fetchAnnouncements() {
+    function renderAnnouncements(data) {
       const listContainer = document.getElementById('announcements-list');
+      const loader = document.getElementById('page-loader');
+      const inboxContent = document.getElementById('inbox-content');
+
+      listContainer.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        listContainer.innerHTML = `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center flex flex-col items-center">
+            <div class="bg-[#002F6C]/5 p-5 rounded-full mb-4">
+              <i data-lucide="message-square" class="h-12 w-12 text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-[#002F6C]">No announcements yet</h3>
+            <p class="text-sm text-gray-400 mt-1 max-w-xs mx-auto">
+              We'll broadcast pool announcements, closures, or notices here.
+            </p>
+          </div>
+        `;
+      } else {
+        data.forEach(item => {
+          const isNewItem = isNew(item.created_at);
+          const newBadge = isNewItem ? `
+            <span class="bg-[#C5A880] text-[#002F6C] text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+              New
+            </span>
+          ` : '';
+
+          const card = document.createElement('div');
+          card.className = "bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition p-6 relative overflow-hidden";
+          card.innerHTML = `
+            <!-- Left accent bar -->
+            <div class="absolute top-0 bottom-0 left-0 w-1.5 bg-[#002F6C]"></div>
+
+            <!-- Card Title & Badges -->
+            <div class="flex items-start justify-between gap-4 mb-3 pl-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-lg font-bold text-gray-800 tracking-tight">
+                  ${item.title}
+                </h2>
+                ${newBadge}
+              </div>
+              
+              <!-- Timestamp -->
+              <div class="flex items-center space-x-1 text-xs text-gray-400 whitespace-nowrap">
+                <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
+                <span>${formatTimeAgo(item.created_at)}</span>
+              </div>
+            </div>
+
+            <!-- Content Divider -->
+            <hr class="border-gray-100 mb-4 pl-2" />
+
+            <!-- Body Content -->
+            <div class="pl-2">
+              <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                ${item.content}
+              </p>
+            </div>
+          `;
+          listContainer.appendChild(card);
+        });
+      }
+
+      loader.classList.add('hidden');
+      inboxContent.classList.remove('hidden');
+
+      if (window.updateIcons) window.updateIcons();
+    }
+
+    async function fetchAnnouncements() {
       const loader = document.getElementById('page-loader');
       const inboxContent = document.getElementById('inbox-content');
       const errorContainer = document.getElementById('error-container');
       const errorMessage = document.getElementById('error-message');
 
       errorContainer.classList.add('hidden');
+
+      // 1) Load from local cache immediately
+      let hasCachedData = false;
+      try {
+        const cachedAnnObj = localStorage.getItem('upsi_cached_announcements');
+        if (cachedAnnObj !== null) {
+          const cachedData = JSON.parse(cachedAnnObj);
+          renderAnnouncements(cachedData);
+          hasCachedData = true;
+        }
+      } catch (e) {
+        console.warn("Error loading cached announcements:", e);
+      }
+
+      // Show loader if no cache exists
+      if (!hasCachedData) {
+        loader.classList.remove('hidden');
+        inboxContent.classList.add('hidden');
+      }
       
       try {
+        // 2) Fetch fresh announcements from Supabase
         const { data, error } = await window.supabaseClient
           .from('announcements')
           .select('*')
@@ -122,69 +211,9 @@
 
         if (error) throw error;
 
-        listContainer.innerHTML = '';
-
-        if (!data || data.length === 0) {
-          listContainer.innerHTML = `
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center flex flex-col items-center">
-              <div class="bg-[#002F6C]/5 p-5 rounded-full mb-4">
-                <i data-lucide="message-square" class="h-12 w-12 text-gray-400"></i>
-              </div>
-              <h3 class="text-lg font-bold text-[#002F6C]">No announcements yet</h3>
-              <p class="text-sm text-gray-400 mt-1 max-w-xs mx-auto">
-                We'll broadcast pool announcements, closures, or notices here.
-              </p>
-            </div>
-          `;
-        } else {
-          data.forEach(item => {
-            const isNewItem = isNew(item.created_at);
-            const newBadge = isNewItem ? `
-              <span class="bg-[#C5A880] text-[#002F6C] text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                New
-              </span>
-            ` : '';
-
-            const card = document.createElement('div');
-            card.className = "bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition p-6 relative overflow-hidden";
-            card.innerHTML = `
-              <!-- Left accent bar -->
-              <div class="absolute top-0 bottom-0 left-0 w-1.5 bg-[#002F6C]"></div>
-
-              <!-- Card Title & Badges -->
-              <div class="flex items-start justify-between gap-4 mb-3 pl-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="text-lg font-bold text-gray-800 tracking-tight">
-                    ${item.title}
-                  </h2>
-                  ${newBadge}
-                </div>
-                
-                <!-- Timestamp -->
-                <div class="flex items-center space-x-1 text-xs text-gray-400 whitespace-nowrap">
-                  <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
-                  <span>${formatTimeAgo(item.created_at)}</span>
-                </div>
-              </div>
-
-              <!-- Content Divider -->
-              <hr class="border-gray-100 mb-4 pl-2" />
-
-              <!-- Body Content -->
-              <div class="pl-2">
-                <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                  ${item.content}
-                </p>
-              </div>
-            `;
-            listContainer.appendChild(card);
-          });
-        }
-
-        loader.classList.add('hidden');
-        inboxContent.classList.remove('hidden');
-
-        if (window.updateIcons) window.updateIcons();
+        // 3) Update cache and render fresh list
+        localStorage.setItem('upsi_cached_announcements', JSON.stringify(data || []));
+        renderAnnouncements(data || []);
 
       } catch (err) {
         console.error('Error fetching announcements:', err);

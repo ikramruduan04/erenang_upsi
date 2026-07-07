@@ -252,12 +252,60 @@
       });
     }
 
+    // Helper function to update Home UI elements instantly
+    function renderHomeUI(sessionCount, profile, user) {
+      // Determine tier details
+      const nextTierSessions = 10;
+      const progressPercent = Math.min((sessionCount / nextTierSessions) * 100, 100);
+      const remainingSwims = Math.max(nextTierSessions - sessionCount, 0);
+
+      let tier = 'Bronze Swimmer';
+      let tierColorClass = 'text-[#CD7F32]'; // Bronze color
+      if (sessionCount >= 15) {
+        tier = 'Gold Swimmer';
+        tierColorClass = 'text-[#C5A880]'; // Accent gold
+      } else if (sessionCount >= 7) {
+        tier = 'Silver Swimmer';
+        tierColorClass = 'text-[#C0C0C0]'; // Silver
+      }
+
+      // Update DOM elements
+      document.getElementById('display-name').textContent = profile?.name || user?.email || 'Swimmer';
+      document.getElementById('display-usertype').textContent = profile?.user_type || 'Student';
+      document.getElementById('display-tier').textContent = tier;
+      
+      const tierIcon = document.getElementById('tier-icon');
+      tierIcon.className = `h-7 w-7 ${tierColorClass}`;
+      
+      document.getElementById('display-progress-ratio').textContent = `${sessionCount} / ${nextTierSessions} swims`;
+      document.getElementById('tier-progress-bar').style.width = `${progressPercent}%`;
+      document.getElementById('display-encouragement').textContent = `Book ${remainingSwims} more sessions to unlock premium benefits!`;
+
+      // Reveal content & hide loader
+      document.getElementById('page-loader').classList.add('hidden');
+      document.getElementById('home-content').classList.remove('hidden');
+
+      if (window.updateIcons) window.updateIcons();
+    }
+
     // Dynamic resolution based on Supabase session
     onAuthResolve(async (user, profile) => {
       if (!user) return; // auth.js will handle redirect to login
 
+      // 1) Render immediately using cached session count if available
+      let cachedCount = 0;
       try {
-        // Fetch session completions (bookings status === 'Checked In')
+        const localCount = localStorage.getItem('upsi_cached_session_count');
+        if (localCount !== null) {
+          cachedCount = parseInt(localCount);
+          renderHomeUI(cachedCount, profile, user);
+        }
+      } catch (e) {
+        console.warn("Error loading cached count:", e);
+      }
+
+      try {
+        // 2) Fetch session completions from Supabase in the background
         const { data: bookings, error } = await window.supabaseClient
           .from('bookings')
           .select('status')
@@ -267,42 +315,16 @@
 
         const sessionCount = (bookings || []).filter(b => b.status === 'Checked In').length;
 
-        // Determine tier details
-        const nextTierSessions = 10;
-        const progressPercent = Math.min((sessionCount / nextTierSessions) * 100, 100);
-        const remainingSwims = Math.max(nextTierSessions - sessionCount, 0);
-
-        let tier = 'Bronze Swimmer';
-        let tierColorClass = 'text-[#CD7F32]'; // Bronze color
-        if (sessionCount >= 15) {
-          tier = 'Gold Swimmer';
-          tierColorClass = 'text-[#C5A880]'; // Accent gold
-        } else if (sessionCount >= 7) {
-          tier = 'Silver Swimmer';
-          tierColorClass = 'text-[#C0C0C0]'; // Silver
-        }
-
-        // Update DOM elements
-        document.getElementById('display-name').textContent = profile?.name || 'Swimmer';
-        document.getElementById('display-usertype').textContent = profile?.user_type || 'Student';
-        document.getElementById('display-tier').textContent = tier;
-        
-        const tierIcon = document.getElementById('tier-icon');
-        tierIcon.className = `h-7 w-7 ${tierColorClass}`;
-        
-        document.getElementById('display-progress-ratio').textContent = `${sessionCount} / ${nextTierSessions} swims`;
-        document.getElementById('tier-progress-bar').style.width = `${progressPercent}%`;
-        document.getElementById('display-encouragement').textContent = `Book ${remainingSwims} more sessions to unlock premium benefits!`;
-
-        // Reveal content & hide loader
-        document.getElementById('page-loader').classList.add('hidden');
-        document.getElementById('home-content').classList.remove('hidden');
-
-        if (window.updateIcons) window.updateIcons();
+        // 3) Update cache and re-render UI with fresh data
+        localStorage.setItem('upsi_cached_session_count', sessionCount);
+        renderHomeUI(sessionCount, profile, user);
 
       } catch (err) {
         console.error('Error loading home data:', err);
-        document.getElementById('page-loader').innerHTML = `<p class="text-red-500 text-sm font-bold">Failed to load account data. Please refresh.</p>`;
+        // If we didn't render anything from cache yet, show error message
+        if (document.getElementById('home-content').classList.contains('hidden')) {
+          document.getElementById('page-loader').innerHTML = `<p class="text-red-500 text-sm font-bold">Failed to load account data. Please refresh.</p>`;
+        }
       }
     });
   </script>

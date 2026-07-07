@@ -163,11 +163,27 @@
       const empty = document.getElementById('empty-state');
       const content = document.getElementById('tickets-content');
       
-      loader.classList.remove('hidden');
-      empty.classList.add('hidden');
-      content.classList.add('hidden');
+      // 1) Load from local cache immediately
+      try {
+        const cachedBookingsObj = localStorage.getItem('upsi_cached_bookings');
+        if (cachedBookingsObj !== null) {
+          allBookings = JSON.parse(cachedBookingsObj);
+          renderList();
+          loader.classList.add('hidden');
+        }
+      } catch (e) {
+        console.warn("Error loading cached bookings:", e);
+      }
+
+      // If we don't have cached data, show the loader
+      if (allBookings.length === 0) {
+        loader.classList.remove('hidden');
+        empty.classList.add('hidden');
+        content.classList.add('hidden');
+      }
 
       try {
+        // 2) Fetch fresh data from Supabase in the background
         const { data, error } = await window.supabaseClient
           .from('bookings')
           .select('*')
@@ -177,12 +193,16 @@
         if (error) throw error;
         allBookings = data || [];
 
+        // 3) Save to cache and update UI
+        localStorage.setItem('upsi_cached_bookings', JSON.stringify(allBookings));
         renderList();
         loader.classList.add('hidden');
       } catch (err) {
         console.error('Error fetching bookings:', err);
         loader.classList.add('hidden');
-        empty.classList.remove('hidden');
+        if (allBookings.length === 0) {
+          empty.classList.remove('hidden');
+        }
       }
     }
 
