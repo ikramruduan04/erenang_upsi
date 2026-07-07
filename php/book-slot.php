@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- Lucide Icons Local -->
   <script src="js/lucide.min.js"></script>
+  <!-- Supabase & Auth Central Logic (Loaded in head so it is ready for Navbar) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
   <style>
     /* Scrollbar hidden for date strip */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -297,11 +301,6 @@
 
   </main>
 
-  <!-- Supabase Local -->
-  <script src="js/supabase.min.js"></script>
-  <!-- App Auth & Utilities -->
-  <script src="js/auth.js"></script>
-  <script src="js/main.js"></script>
 
   <script>
     // Ticket Data

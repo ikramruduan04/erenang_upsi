@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- Lucide Icons Local -->
   <script src="js/lucide.min.js"></script>
+  <!-- Supabase & Auth Central Logic (Loaded in head so it is ready for Navbar) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
 </head>
 <body class="min-h-screen bg-[#F4F6F9] flex font-outfit text-[#1E293B]">
 
@@ -348,11 +352,6 @@
     </div>
   </div>
 
-  <!-- Supabase Local -->
-  <script src="js/supabase.min.js"></script>
-  <!-- App Auth & Utilities -->
-  <script src="js/auth.js"></script>
-  <script src="js/main.js"></script>
 
   <script>
     // Walkin Dropdown data

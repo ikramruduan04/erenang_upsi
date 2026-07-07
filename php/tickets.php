@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- Lucide Icons Local -->
   <script src="js/lucide.min.js"></script>
+  <!-- Supabase & Auth Central Logic (Loaded in head so it is ready for Navbar) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
 </head>
 <body class="bg-[#F4F6F9] min-h-screen flex flex-col font-outfit text-[#1E293B]">
 
@@ -108,11 +112,6 @@
 
   </main>
 
-  <!-- Supabase Local -->
-  <script src="js/supabase.min.js"></script>
-  <!-- App Auth & Utilities -->
-  <script src="js/auth.js"></script>
-  <script src="js/main.js"></script>
 
   <script>
     const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
